@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sprechtrainer Deutsch</title>
+<meta name="theme-color" content="#0e6a62" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131519" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sprechtrainer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,650&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f1ea; --surface:#fffdf8; --surface-2:#efe9df; --ink:#1c1e22; --muted:#6c6f76; --line:#e2dbcf;
+  --accent:#0e6a62; --accent-ink:#ffffff; --accent-soft:#dfefec;
+  --user:#23262c; --user-ink:#f5f1ea;
+  --bad:#b3261e; --bad-soft:#fbe8e5; --good:#17683a; --good-soft:#e3f2e8; --tip:#7a5800; --tip-soft:#f9f0d6;
+  --rec:#d23a2c; --radius:16px;
+  --serif:"Source Serif 4", Georgia, serif;
+  --sans:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#131519; --surface:#1b1e23; --surface-2:#23272e; --ink:#ebe7e0; --muted:#9a9fa8; --line:#2d3139;
+    --accent:#52b8ad; --accent-ink:#0b1513; --accent-soft:#1b2e2b;
+    --user:#e7e3dc; --user-ink:#16181c;
+    --bad:#f0897f; --bad-soft:#3a2220; --good:#7fcb98; --good-soft:#1c3225; --tip:#e7c46a; --tip-soft:#32301d;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans);display:flex;flex-direction:column;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:disabled{opacity:.45;cursor:default}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+b{font-weight:600}
+
+/* Header */
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.hdr{max-width:900px;margin:0 auto;padding:10px 16px 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:8px;margin-right:auto}
+.brand .name{font-family:var(--serif);font-weight:650;font-size:22px;letter-spacing:-.01em}
+.seg{display:flex;background:var(--surface-2);border-radius:99px;padding:3px}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:99px;font-size:14px;font-weight:500;color:var(--muted)}
+.seg button.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg.levels button{padding:5px 10px;font-weight:600;letter-spacing:.02em}
+.seg.levels button.active{color:var(--accent)}
+.icons{display:flex;gap:6px}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 11px;font-size:14px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.iconbtn .count{background:var(--bad-soft);color:var(--bad);font-weight:600;font-size:12px;border-radius:99px;padding:0 7px}
+.iconbtn .count.ok{background:var(--accent-soft);color:var(--accent)}
+.toolbar{max-width:900px;margin:0 auto;padding:0 16px 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input{flex:1;min-width:180px}
+.toolbar select{width:auto;max-width:260px}
+.pill{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 14px;font-size:14px;font-weight:500;white-space:nowrap}
+.pill.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.pill small{color:var(--muted);font-weight:400}
+.pill.primary small{color:color-mix(in srgb,var(--accent-ink) 75%,transparent)}
+.spacer{flex:1}
+.progress{font-size:13px;color:var(--muted)}
+
+/* Timer */
+.timer{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 6px 4px 12px;font-size:14px}
+.timer .t{font-variant-numeric:tabular-nums;font-weight:600;min-width:44px}
+.timer.warn{border-color:var(--tip);background:var(--tip-soft);color:var(--tip)}
+.timer.over{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.timer.armed{border-style:dashed}
+.timer button{border:0;background:var(--surface-2);border-radius:99px;padding:3px 9px;font-size:12.5px}
+.timer select{width:auto;padding:3px 6px;border-radius:99px;font-size:12.5px;background:var(--surface-2);border:0}
+
+/* Chat */
+main{flex:1;overflow-y:auto}
+.chat{max-width:900px;margin:0 auto;padding:20px 16px 24px;display:flex;flex-direction:column;gap:14px}
+.msg{max-width:80%;padding:12px 16px;border-radius:var(--radius);white-space:pre-wrap;word-wrap:break-word}
+.msg.tutor{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
+.msg.tutor .w{cursor:pointer;border-radius:4px}
+.msg.tutor .w:hover{background:var(--accent-soft)}
+.msg.tutor.better{border-color:var(--accent);background:var(--accent-soft)}
+.msg.tutor.better .lbl,.msg.tutor.report .lbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:4px}
+.msg.tutor.report{border-color:var(--tip);background:var(--tip-soft)}
+.msg.tutor.report .lbl{color:var(--tip)}
+.msg.user{align-self:flex-end;background:var(--user);color:var(--user-ink);border-bottom-right-radius:6px}
+.msg.draft{align-self:flex-end;background:transparent;border:1.5px dashed var(--rec);color:var(--ink)}
+.msg .interim{color:var(--muted)}
+.msg .replay{display:block;margin-top:6px;border:0;background:none;color:var(--accent);font-size:13px;padding:0}
+.chip{align-self:center;font-size:12.5px;color:var(--muted);background:var(--surface-2);padding:4px 12px;border-radius:99px;text-align:center}
+.chip.err{color:var(--bad);background:var(--bad-soft)}
+.chip.good{color:var(--good);background:var(--good-soft)}
+.chip button{border:0;background:none;color:inherit;text-decoration:underline;padding:0 0 0 6px;font-size:12.5px}
+.corr{align-self:flex-end;max-width:80%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:14px;margin-top:-6px}
+.corr summary{cursor:pointer;color:var(--muted);font-weight:500}
+.corr.ok{color:var(--good);background:var(--good-soft);border-color:transparent;padding:5px 12px;font-weight:500}
+.crow{padding:6px 0;border-top:1px solid var(--line)}
+.crow:first-child{border-top:0}
+.corr details .crow:first-of-type{border-top:0;margin-top:4px}
+.from{color:var(--bad);text-decoration:line-through;text-decoration-thickness:1px}
+.to{color:var(--good);font-weight:600}
+.arrow{color:var(--muted);margin:0 6px}
+.why{color:var(--muted);font-size:13px;margin-top:1px}
+.tag{display:inline-block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--tip);background:var(--tip-soft);border-radius:6px;padding:1px 6px;margin-right:6px}
+.crow.w .from{color:var(--ink);text-decoration:none;opacity:.75}
+.crow.w .to{color:var(--tip)}
+.mast{font-size:12px;color:var(--muted);margin-left:8px}
+
+.welcome{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:26px 26px 22px;margin-top:8px}
+.welcome h1{font-family:var(--serif);font-weight:650;font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+.welcome p{margin:0 0 14px;color:var(--muted)}
+.welcome ol,.welcome ul{margin:0 0 18px;padding-left:20px}
+.welcome li{margin:4px 0}
+.welcome kbd{font:12px var(--sans);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--surface-2)}
+.welcome .actions{display:flex;gap:8px;flex-wrap:wrap}
+.banner{background:var(--tip-soft);color:var(--tip);border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:14px}
+.banner.info{background:var(--accent-soft);color:var(--accent)}
+
+/* Word popup */
+.wpop{position:fixed;z-index:20;width:min(340px,calc(100vw - 24px));background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:12px 14px;font-size:14px}
+.wpop h4{margin:0 0 4px;font-size:17px;font-family:var(--serif);font-weight:650}
+.wpop .en{color:var(--muted);font-size:13px;margin-bottom:6px}
+.wpop .ex{font-style:italic;margin:6px 0 10px;color:var(--ink)}
+.wpop .row{display:flex;gap:8px;justify-content:flex-end}
+.wpop .pill{padding:5px 11px;font-size:13px}
+
+/* Footer */
+footer{border-top:1px solid var(--line);background:var(--bg);padding-bottom:env(safe-area-inset-bottom)}
+.foot{max-width:900px;margin:0 auto;padding:12px 16px 14px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.micwrap{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.mic{width:72px;height:72px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent);transition:transform .12s}
+.mic:active{transform:scale(.96)}
+.mic svg{width:30px;height:30px}
+.mic.listening{background:var(--rec);animation:pulse 1.4s infinite}
+.mic.busy{background:var(--surface-2);color:var(--ink);box-shadow:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rec) 50%,transparent)}100%{box-shadow:0 0 0 18px transparent}}
+.miclabel{font-size:12px;color:var(--muted);font-weight:500}
+.discard{position:absolute;top:-4px;right:-10px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:13px;line-height:1;display:none}
+.discard.show{display:block}
+.side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.status{font-size:14px;color:var(--muted);min-height:21px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.status .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.status.listening .dot{background:var(--rec)}
+.status.thinking .dot{background:var(--tip);animation:blink 1s infinite}
+.status.speaking .dot{background:var(--accent);animation:blink .8s infinite}
+.status .cost{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+@keyframes blink{50%{opacity:.25}}
+.textrow{display:flex;gap:8px}
+.textrow button{border:0;background:var(--user);color:var(--user-ink);border-radius:10px;padding:0 16px;font-weight:500}
+.opts{display:flex;gap:8px 14px;font-size:13px;color:var(--muted);flex-wrap:wrap;align-items:center}
+.opts label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.opts input{width:auto}
+.opts .pill{padding:4px 11px;font-size:13px}
+
+/* Dialogs */
+dialog{border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);padding:0;width:min(600px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+.dlg{padding:22px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;max-height:calc(100vh - 40px)}
+.dlg h2{font-family:var(--serif);font-weight:650;font-size:21px;margin:0}
+.dlg h3{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:8px 0 0}
+.field{display:flex;flex-direction:column;gap:5px}
+.field > span{font-size:13px;font-weight:600}
+.field small{color:var(--muted);font-size:12.5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row input[type=range]{padding:0}
+.dlg-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.note{font-size:13px;color:var(--bad)}
+.errgroup{border-top:1px solid var(--line);padding:10px 0}
+.errgroup .said{font-size:13px;color:var(--muted);margin-bottom:4px;font-style:italic}
+.empty{color:var(--muted);font-size:14px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.tile .v{font-family:var(--serif);font-size:24px;font-weight:650;line-height:1.1}
+.tile .k{font-size:12px;color:var(--muted);margin-top:2px}
+.bars{display:flex;align-items:flex-end;gap:4px;height:90px;padding:0 2px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.bar i{display:block;width:100%;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px;opacity:.85}
+.bar.today i{background:var(--tip)}
+.bar span{font-size:10px;color:var(--muted)}
+.sess{border-top:1px solid var(--line);padding:8px 0;font-size:14px}
+.sess summary{cursor:pointer}
+.sess .meta{color:var(--muted);font-size:13px}
+.sess p{margin:6px 0 0;white-space:pre-wrap}
+.vocab{border-top:1px solid var(--line);padding:8px 0;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.vocab b{font-size:15px}
+.vocab .d{flex:1}
+.vocab .d small{color:var(--muted);display:block}
+.vocab button{border:0;background:none;color:var(--muted);font-size:16px;padding:0 4px}
+
+@media (max-width:640px){
+  .msg,.corr{max-width:92%}
+  .grid2,.tiles{grid-template-columns:1fr 1fr}
+  .mic{width:62px;height:62px}
+  .welcome{padding:20px}
+  .brand .name{font-size:20px}
+  .hdr{gap:8px}
+  .iconbtn{padding:5px 9px;font-size:13px}
+  #btnVocabWarm{display:none}
+  .toolbar select{max-width:100%;flex:1}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <div class="brand"><span class="name">Sprechtrainer</span></div>
+    <div class="seg levels" id="levelSeg" role="tablist" title="Niveau">
+      <button data-level="A2">A2</button><button data-level="B1">B1</button><button data-level="B2">B2</button><button data-level="C1">C1</button>
+    </div>
+    <div class="seg" id="modeSeg" role="tablist">
+      <button data-mode="free">Gespräch</button><button data-mode="exam">Prüfung</button><button data-mode="training">Training</button>
+    </div>
+    <div class="icons">
+      <button class="iconbtn" id="btnStats" title="Statistik">Statistik <span class="count ok" id="streakBadge">0</span></button>
+      <button class="iconbtn" id="btnVocab" title="Vokabeln">Vokabeln <span class="count ok" id="vocabCount">0</span></button>
+      <button class="iconbtn" id="btnErrors" title="Gesammelte Korrekturen">Fehler <span class="count" id="errCount">0</span></button>
+      <button class="iconbtn" id="btnSettings" title="Einstellungen" aria-label="Einstellungen">⚙︎</button>
+    </div>
+  </div>
+  <div class="toolbar" id="toolbarFree">
+    <select id="scenario" title="Szenario"></select>
+    <input id="topic" placeholder="Thema (optional) – z. B. Wohnungssuche, Energiewende, Homeoffice …">
+    <button class="pill primary" id="btnStartFree">Gespräch starten</button>
+    <button class="pill" id="btnVocabWarm" title="Kurzes Gespräch mit deinen gespeicherten Vokabeln">Vokabel-Warm-up</button>
+    <button class="pill" data-action="new">Neu</button>
+  </div>
+  <div class="toolbar" id="toolbarExam" hidden>
+    <span id="examParts" style="display:contents"></span>
+    <span class="spacer"></span>
+    <span class="timer" id="timer" hidden><span class="t" id="timerText">0:00</span><span id="timerKind"></span><button id="timerStop">✕</button></span>
+    <span class="timer" id="prepTimer"><span>Vorbereitung</span><select id="prepMin"><option value="1">1 min</option><option value="2">2 min</option><option value="5">5 min</option><option value="10">10 min</option><option value="20">20 min</option></select><button id="prepStart">Start</button></span>
+    <button class="pill" data-action="new">Neu</button>
+  </div>
+  <div class="toolbar" id="toolbarTraining" hidden>
+    <span class="progress" id="trainProgress"></span>
+    <span class="spacer"></span>
+    <button class="pill primary" id="btnNextDrill">Nächste Übung</button>
+    <button class="pill" data-action="new">Neu</button>
+  </div>
+</header>
+
+<main id="scroller"><div class="chat" id="chat"></div></main>
+
+<footer>
+  <div class="foot">
+    <div class="micwrap">
+      <button class="mic" id="btnMic" aria-label="Sprechen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <button class="discard" id="btnDiscard" title="Aufnahme verwerfen (Esc)">✕</button>
+      <span class="miclabel" id="micLabel">Sprechen</span>
+    </div>
+    <div class="side">
+      <div class="status" id="status"><span class="dot"></span><span id="statusText">Bereit</span><span class="cost" id="costText"></span></div>
+      <form class="textrow" id="textForm" autocomplete="off">
+        <input id="textInput" placeholder="… oder hier tippen und Enter drücken">
+        <button type="submit">Senden</button>
+      </form>
+      <div class="opts">
+        <label><input type="checkbox" id="optHandsFree"> Freihändig</label>
+        <label><input type="checkbox" id="optSpeak"> Vorlesen</label>
+        <span class="spacer"></span>
+        <button class="pill" id="btnBetter" title="Deine letzte Antwort, wie ein Muttersprachler sie sagen würde" disabled>Sag's besser</button>
+        <button class="pill" id="btnEndSession" title="Kurzer Bericht und Sitzung speichern" disabled>Sitzung beenden</button>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Settings -->
+<dialog id="dlgSettings">
+  <form class="dlg" method="dialog" id="settingsForm">
+    <h2>Einstellungen</h2>
+    <div class="note" id="settingsNote" hidden></div>
+    <label class="field"><span>Claude API-Schlüssel</span>
+      <input type="password" id="setKey" placeholder="sk-ant-…" autocomplete="off">
+      <small>Aus der Claude Console unter „API Keys“. Wird nur in diesem Browser gespeichert und direkt an Anthropic gesendet.</small>
+    </label>
+    <div class="grid2">
+      <label class="field"><span>Modell für Gespräche</span>
+        <select id="setModel">
+          <option value="claude-haiku-5-5">Haiku 5.5 – am schnellsten, günstig</option>
+          <option value="claude-sonnet-5-5">Sonnet 5.5 – empfohlen</option>
+          <option value="claude-opus-5-5">Opus 5.5 – beste Qualität, teurer</option>
+        </select>
+      </label>
+      <label class="field"><span>Korrekturen</span>
+        <select id="setStrict">
+          <option value="all">Gründlich – alle Fehler</option>
+          <option value="main">Die wichtigsten (max. 3)</option>
+          <option value="off">Keine</option>
+        </select>
+      </label>
+    </div>
+    <label class="field"><span>Über mich</span>
+      <textarea id="setAbout" rows="3" placeholder="z. B. Ich heiße …, arbeite als … in … und bereite mich auf telc C1 vor. Meine Interessen: …"></textarea>
+      <small>Hilft beim Themenfinden. Gern auf Deutsch. Bleibt nur in diesem Browser gespeichert.</small>
+    </label>
+    <div class="grid2">
+      <label class="field"><span>Anzeige der Korrekturen</span>
+        <select id="setView">
+          <option value="auto">Automatisch (Prüfung: eingeklappt)</option>
+          <option value="open">Immer sofort zeigen</option>
+          <option value="closed">Immer eingeklappt</option>
+        </select>
+      </label>
+      <label class="field"><span>Pause bis Senden <b id="pauseVal"></b></span>
+        <input type="range" id="setPause" min="1.5" max="6" step="0.5">
+        <small>Freihändig, nur im Gespräch und Training.</small>
+      </label>
+    </div>
+    <label class="field"><span>Stimme</span>
+      <div class="row"><select id="setVoice" style="flex:1"></select><button type="button" class="pill" id="btnTestVoice">Test</button></div>
+      <small>Tipp: In Microsoft Edge klingen die „Natural“-Stimmen (Katja, Conrad, Seraphina …) am besten. Auf Android: Google-Stimme „Deutsch“.</small>
+    </label>
+    <label class="field"><span>Sprechtempo <b id="rateVal"></b></span>
+      <input type="range" id="setRate" min="0.7" max="1.3" step="0.05">
+      <small>Auf A2 und B1 spricht die Tutorin automatisch etwas langsamer.</small>
+    </label>
+    <h3>Daten</h3>
+    <div class="row">
+      <button type="button" class="pill" id="btnBackup">Backup herunterladen</button>
+      <button type="button" class="pill" id="btnRestore">Backup laden</button>
+      <input type="file" id="restoreFile" accept="application/json" hidden>
+      <small style="flex-basis:100%">Enthält Statistik, Fehlerliste, Vokabeln und Einstellungen – ohne API-Schlüssel. So nimmst du deinen Fortschritt vom Laptop aufs Handy mit.</small>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="pill" id="btnForgetKey">Schlüssel löschen</button>
+      <button type="submit" class="pill primary">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Error list -->
+<dialog id="dlgErrors">
+  <div class="dlg">
+    <h2>Fehlerliste</h2>
+    <p class="empty" style="margin:0">Im Modus <b>Training</b> übst du diese Strukturen gezielt. Dreimal richtig getroffen = sitzt.</p>
+    <div id="errList"></div>
+    <div class="dlg-actions">
+      <button class="pill" id="btnClearErrors">Liste leeren</button>
+      <button class="pill" id="btnCopyErrors">Kopieren</button>
+      <button class="pill" id="btnDownloadErrors">Als Markdown</button>
+      <button class="pill primary" data-close="dlgErrors">Schließen</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Vocab -->
+<dialog id="dlgVocab">
+  <div class="dlg">
+    <h2>Vokabeln</h2>
+    <p class="empty" style="margin:0">Tippe im Gespräch auf ein Wort in einer Antwort der Tutorin, um es nachzuschlagen und zu speichern.</p>
+    <div id="vocabList"></div>
+    <div class="dlg-actions">
+      <button class="pill" id="btnVocabWarm2">Warm-up starten</button>
+      <button class="pill" id="btnDownloadVocab">Als Markdown</button>
+      <button class="pill primary" data-close="dlgVocab">Schließen</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Stats -->
+<dialog id="dlgStats">
+  <div class="dlg">
+    <h2>Statistik</h2>
+    <div class="tiles" id="tiles"></div>
+    <h3>Sprechminuten – letzte 14 Tage</h3>
+    <div class="bars" id="bars"></div>
+    <h3>Sitzungen</h3>
+    <div id="sessList"></div>
+    <div class="dlg-actions">
+      <button class="pill primary" data-close="dlgStats">Schließen</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+// ==PURE==
+const MARK = '§§';
+
+function lastBoundary(s){
+  const re = /(?<![\s(]\p{L})(?<!\d)[.!?…]+["»«“”'’)\]]*(?=\s)/gu;
+  let m, end = 0;
+  while ((m = re.exec(s))) end = m.index + m[0].length;
+  return end;
+}
+function splitSentences(t){
+  const re = /(?<![\s(]\p{L})(?<!\d)[.!?…]+["»«“”'’)\]]*(?=\s|$)/gu;
+  const out = []; let m, start = 0;
+  while ((m = re.exec(t))) { out.push(t.slice(start, m.index + m[0].length)); start = m.index + m[0].length; }
+  out.push(t.slice(start));
+  return out.map(x => x.trim()).filter(Boolean);
+}
+function cleanSpeech(t){
+  return t.replace(/[*_#`~>|]/g, '').replace(/§+[A-Za-zÄÖÜ]*$/,'').replace(/§/g,'').replace(/\s+/g,' ').trim();
+}
+function splitOutput(full){
+  const i = full.indexOf(MARK);
+  if (i < 0) return { spoken: full.replace(/§+$/,''), corr: null };
+  return { spoken: full.slice(0, i), corr: full.slice(i + MARK.length) };
+}
+function stripQuotes(s){ return s.trim().replace(/^[<„“"'»«‚]+|[>“”"'»«‘]+$/g,'').trim(); }
+function parseCorrections(raw){
+  const res = { ok:false, items:[], target:null };
+  if (raw == null) return res;
+  raw.replace(/^\s*KORREKTUR\s*§*/i,'').split(/\r?\n/).forEach(line => {
+    const l = line.trim().replace(/^[-*•]\s*/,'');
+    if (!l) return;
+    if (/^OK\b\.?$/i.test(l)) { res.ok = true; return; }
+    const z = l.match(/^ZIEL\s*:\s*(OK|JA|NEIN|NO)\b/i);
+    if (z) { res.target = /OK|JA/i.test(z[1]) ? 'OK' : 'NEIN'; return; }
+    const m = l.match(/^([FW])\s*:\s*(.+?)\s*(?:=>|→|->)\s*(.+?)(?:\s*\|\|\s*(.*))?$/i);
+    if (m) res.items.push({ type:m[1].toUpperCase(), from:stripQuotes(m[2]), to:stripQuotes(m[3]), why:(m[4]||'').trim() });
+  });
+  return res;
+}
+function buildApiMessages(history, n){
+  const merged = [];
+  for (const h of history) {
+    if (!h.content) continue;
+    const last = merged[merged.length-1];
+    if (last && last.role === h.role) last.content += '\n\n' + h.content;
+    else merged.push({ role:h.role, content:h.content });
+  }
+  let msgs = merged.slice(-n);
+  while (msgs.length && msgs[0].role !== 'user') msgs.shift();
+  return msgs;
+}
+const PRICES = { // USD per million tokens: input, output, cache write, cache read
+  'claude-haiku-5-5':[0.10,0.50,0.125,0.01],
+  'claude-sonnet-5-5':[2,10,2.5,0.10],
+  'claude-opus-5-5':[5,25,6.25,0.50]
+};
+function costOf(model, u){
+  const p = PRICES[model] || PRICES['claude-sonnet-5-5'];
+  return ((u.in||0)*p[0] + (u.out||0)*p[1] + (u.cw||0)*p[2] + (u.cr||0)*p[3]) / 1e6;
+}
+function dayKey(d){ const x = new Date(d); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); }
+function calcStreak(sessions, now){
+  const days = new Set(sessions.filter(s => s.userSec >= 30).map(s => dayKey(s.start)));
+  let n = 0; const d = new Date(now || Date.now());
+  if (!days.has(dayKey(d))) d.setDate(d.getDate()-1);
+  while (days.has(dayKey(d))) { n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function words(t){ return (t.trim().match(/\S+/g) || []).length; }
+function fmtMin(sec){ const m = Math.round(sec/60); return m + ' min'; }
+function fmtUSD(x){ return '$' + x.toFixed(x < 0.1 ? 3 : 2).replace('.', ','); }
+// ==/PURE==
+
+/* ---------------- Config tables ---------------- */
+const LEVELS = {
+  A2:{ rate:0.85, name:'A2' }, B1:{ rate:0.92, name:'B1' }, B2:{ rate:1, name:'B2' }, C1:{ rate:1, name:'C1' }
+};
+
+const LEVEL_PROMPT = {
+  A2:`NIVEAU A2 (Grundstufe). Sprich sehr einfach: kurze Hauptsätze, Präsens und Perfekt, Alltagswortschatz, höchstens zwei Sätze und dann eine einfache Frage. Keine Nebensatzketten, keine Fachwörter. Themen aus dem Alltag: Tagesablauf, Essen, Einkaufen, Familie, Wohnen, Wetter, Arbeit, Freizeit, Wochenende, Pläne.
+Wenn er etwas nicht versteht, sag es noch einfacher und langsamer, nicht auf Englisch. Korrigiere nur: Verbposition (Verb an zweiter Stelle, am Ende im Nebensatz), Verbformen, Perfekt mit sein/haben, Artikel und Pronomen, einfache Präpositionen. Erklärungen in ganz einfachem Deutsch.`,
+  B1:`NIVEAU B1. Sprich einfach und klar: auch Nebensätze mit weil, dass, wenn, obwohl; Perfekt und Präteritum von sein, haben und Modalverben; einfaches Konjunktiv II (würde, hätte, könnte). Alltags- und Arbeitsthemen: Erfahrungen, Pläne, Meinungen begründen, Vor- und Nachteile, Erlebnisse erzählen.
+Korrigiere vor allem: Satzbau (Verbposition im Nebensatz), Kasus nach Präpositionen und Verben, Perfekt, Konnektoren, Adjektivendungen nur wenn grob. Erklärungen in einfachem Deutsch.`,
+  B2:`NIVEAU B2. Natürliches, klares Deutsch mit komplexeren Sätzen: Relativsätze, Konjunktiv II, Passiv, Konnektoren wie deshalb, trotzdem, während, sodass, je … desto. Themen: Gesellschaft, Arbeitswelt, Medien, Umwelt, Bildung, Technik. Fordere Begründungen, Vergleiche und das Abwägen von Argumenten ein.
+Korrigiere: Grammatik aller Art, falsche Wortwahl und Kollokationen, wichtige Registerfehler. Erklärungen kurz und präzise.`,
+  C1:`NIVEAU C1. Anspruchsvolles, idiomatisches Deutsch. Fordere gezielt C1-Strukturen heraus (Konjunktiv II in allen Formen, Passiv und Passiversatz, Nominalisierungen, Partizipialattribute, Konnektoren wie wohingegen, zumal, infolgedessen, geschweige denn), indem du passende Fragen stellst. Themen aus Gesellschaft, Wissenschaft, Wirtschaft, Kultur und Beruf; widersprich höflich, damit er differenziert argumentieren muss.
+Korrigiere auch Stil, Register, Kollokationen und unidiomatische, zu einfache Formulierungen.`
+};
+
+const EXAM = {
+  A2:{ name:'telc Deutsch A2 (Start Deutsch 2)', parts:[
+    { k:'1', label:'Teil 1', sub:'Sich vorstellen', cmd:'[TEIL 1]', timer:60 },
+    { k:'2', label:'Teil 2', sub:'Über ein Thema sprechen', cmd:'[TEIL 2]' },
+    { k:'3', label:'Teil 3', sub:'Etwas aushandeln', cmd:'[TEIL 3]' },
+    { k:'EVAL', label:'Bewertung', cmd:'[BEWERTUNG]' } ],
+    rules:`[TEIL 1] Sich vorstellen: Bitte ihn, sich vorzustellen (Name, Alter, Land, Wohnort, Sprachen, Beruf, Hobby). Unterbrich nicht. Danach stellst du zwei einfache Nachfragen, zum Beispiel zum Hobby oder zum Beruf.
+[TEIL 2] Über ein Thema sprechen: Nenne ein Alltagsthema (Essen und Trinken, Reisen, Wohnen, Tagesablauf, Freizeit, Einkaufen). Ihr stellt euch abwechselnd einfache Fragen dazu und antwortet; du fängst an. Etwa drei Fragen von jeder Seite, dann beendest du den Teil freundlich.
+[TEIL 3] Etwas aushandeln: Schlag etwas Gemeinsames vor (zusammen kochen, ins Kino gehen, einen Ausflug machen). Klärt in einfachen Sätzen Wann, Wo und Was. Mach Vorschläge, sag auch mal Nein mit Begründung, bis ihr euch einig seid.` },
+  B1:{ name:'telc Deutsch B1 / Zertifikat Deutsch', parts:[
+    { k:'1', label:'Teil 1', sub:'Kontaktaufnahme', cmd:'[TEIL 1]' },
+    { k:'2', label:'Teil 2', sub:'Gespräch über ein Thema', cmd:'[TEIL 2]', timer:90 },
+    { k:'3', label:'Teil 3', sub:'Gemeinsam planen', cmd:'[TEIL 3]' },
+    { k:'EVAL', label:'Bewertung', cmd:'[BEWERTUNG]' } ],
+    rules:`[TEIL 1] Kontaktaufnahme: Lernt euch kennen wie in der Prüfung: Fragen zu Herkunft, Wohnort, Familie, Arbeit oder Studium, Sprachen, Freizeit. Eine Frage nach der anderen; beantworte seine Gegenfragen kurz und glaubwürdig als Mitprüfling.
+[TEIL 2] Gespräch über ein Thema: Nenne ein Alltagsthema (Fernsehen, Einkaufen, Wohnen, Gesundheit, Arbeit und Familie, Lernen) und gib ihm zwei oder drei kurze Aussagen dazu, wie aus einem Kurztext. Er soll etwa eine bis anderthalb Minuten berichten, wie es bei ihm ist und was er davon hält. Nicht unterbrechen. Danach zwei Nachfragen, dann sagst du kurz deine eigene Meinung.
+[TEIL 3] Gemeinsam etwas planen: Schlag eine gemeinsame Aufgabe vor (Geburtstagsfeier für einen Freund, Wochenendausflug, Abschiedsgeschenk für eine Kollegin). Macht abwechselnd Vorschläge, reagiert aufeinander, klärt Wann, Wo, Wer macht was, und einigt euch am Ende.` },
+  B2:{ name:'telc Deutsch B2', parts:[
+    { k:'1', label:'Teil 1', sub:'Präsentation', cmd:'[TEIL 1]', timer:120, after:1 },
+    { k:'2', label:'Teil 2', sub:'Diskussion', cmd:'[TEIL 2]' },
+    { k:'3', label:'Teil 3', sub:'Problemlösung', cmd:'[TEIL 3]' },
+    { k:'EVAL', label:'Bewertung', cmd:'[BEWERTUNG]' } ],
+    rules:`[TEIL 1] Präsentation: Biete zwei Themen zur Auswahl an (je ein Satz). Nach seiner Wahl: Er soll etwa anderthalb bis zwei Minuten frei präsentieren (Einleitung, eigene Erfahrungen, Situation in Deutschland und in seinem Heimatland, Vor- und Nachteile, Meinung). Nicht unterbrechen. Danach zwei Nachfragen als Partner.
+[TEIL 2] Diskussion: Stell in zwei Sätzen eine kontroverse Behauptung vor, wie aus einem Zeitungsartikel. Diskutiert etwa fünf Minuten. Vertritt eine eigene, teils gegensätzliche Position, bring Gegenargumente, verlang Begründungen und Beispiele.
+[TEIL 3] Problemlösung: Beschreibt eine Aufgabe, die ihr gemeinsam planen müsst (Betriebsausflug, Einführungstag für neue Kollegen, ein Fest im Haus). Macht Vorschläge, geht auf seine ein, wägt ab und einigt euch auf ein Ergebnis.` },
+  C1:{ name:'telc Deutsch C1', parts:[
+    { k:'1A', label:'Teil 1A', sub:'Präsentation', cmd:'[TEIL 1A]', timer:240, after:1 },
+    { k:'1B', label:'Teil 1B', sub:'Partner', cmd:'[TEIL 1B]' },
+    { k:'2', label:'Teil 2', sub:'Diskussion', cmd:'[TEIL 2]' },
+    { k:'EVAL', label:'Bewertung', cmd:'[BEWERTUNG]' } ],
+    rules:`[TEIL 1A] Präsentation: Biete zwei Themen zur Auswahl an (je ein Satz) und frag, welches er nimmt. Nach seiner Wahl: Er soll etwa drei bis vier Minuten frei präsentieren (Einleitung, Situation und Erfahrungen, Vor- und Nachteile, eigene Meinung, Schluss). Unterbrich nicht. Danach stellst du als Partner nacheinander zwei Anschlussfragen.
+[TEIL 1B] Rollentausch: Halte als Partner selbst eine kurze, gut gegliederte Präsentation (etwa 150 bis 200 Wörter, gesprochene Sprache) zu einem anderen Thema. Bitte ihn danach, sie kurz zusammenzufassen und dir eine Frage dazu zu stellen. Beantworte die Frage knapp.
+[TEIL 2] Diskussion: Stell eine kontroverse These in zwei bis drei Sätzen vor. Diskutiert etwa sechs Minuten. Vertritt eine eigene, teilweise gegensätzliche Position, bring Gegenargumente, verlang Begründungen und Beispiele und sucht am Ende einen Kompromiss oder ein gemeinsames Fazit.` }
+};
+
+const SCENARIOS = [
+  { k:'', label:'Freies Gespräch', prompt:'' },
+  { k:'kaffee', label:'Smalltalk in der Kaffeeküche', prompt:'ROLLENSPIEL: Du bist eine Kollegin, ihr trefft euch morgens in der Kaffeeküche. Lockerer Smalltalk über Wochenende, Wetter, Arbeit, Pläne; wechsle natürlich die Themen.' },
+  { k:'meeting', label:'Projektbesprechung mit Kollegen', prompt:'ROLLENSPIEL: Du bist eine Kollegin in einer Projektbesprechung. Es geht um Aufgabenverteilung, Termine, ein Problem im Projekt. Frag nach seinem Stand, bitte um Einschätzungen, verhandle Fristen.' },
+  { k:'interview', label:'Bewerbungsgespräch', prompt:'ROLLENSPIEL: Du bist Personalleiterin eines Ingenieurbüros oder Forschungsinstituts und führst ein Bewerbungsgespräch. Frag nach Werdegang, Stärken, Schwächen, Motivation, einer schwierigen Situation, Gehaltsvorstellung. Hak nach, wenn Antworten vage bleiben.' },
+  { k:'buergeramt', label:'Termin im Bürgeramt', prompt:'ROLLENSPIEL: Du bist Sachbearbeiterin im Bürgeramt. Er möchte etwas erledigen (Anmeldung, Aufenthaltstitel verlängern, Dokument beantragen). Sei freundlich, aber formell; frag nach Unterlagen, erkläre das Verfahren, nenn ein Problem, das er lösen muss.' },
+  { k:'arzt', label:'Arzttermin', prompt:'ROLLENSPIEL: Du bist Hausärztin. Er beschreibt Beschwerden; frag nach Symptomen, seit wann, Vorgeschichte, Medikamenten; erkläre, was du vorschlägst. Keine echten medizinischen Ratschläge, es ist Sprachtraining.' },
+  { k:'wohnung', label:'Wohnungsbesichtigung', prompt:'ROLLENSPIEL: Du bist Vermieterin bei einer Wohnungsbesichtigung. Beschreib die Wohnung, frag nach Beruf, Einkommen, Haustieren, Einzugsdatum; er soll Fragen stellen (Nebenkosten, Kaution, Renovierung) und sich gut präsentieren.' },
+  { k:'telefon', label:'Telefonat: Termin vereinbaren', prompt:'ROLLENSPIEL: Telefonat. Du bist Mitarbeiterin in einer Praxis, Werkstatt oder Behörde. Er will einen Termin vereinbaren oder verschieben. Nenn nur ungünstige Zeiten, frag nach Daten, buchstabier Namen zurück, fass am Ende zusammen.' },
+  { k:'reklamation', label:'Reklamation / Kundenservice', prompt:'ROLLENSPIEL: Du bist Mitarbeiterin im Kundenservice. Er beschwert sich über ein Produkt oder eine Rechnung. Bleib höflich, aber mach es ihm nicht zu leicht: frag nach Details, biete zuerst eine schwache Lösung an, bis er gut argumentiert.' }
+];
+
+/* ---------------- Settings & stores ---------------- */
+const LS = 'sprechtrainer.';
+const DEFAULTS = {
+  apiKey:'', model:'claude-sonnet-5-5', level:'C1',
+  about:'',
+  strict:'main', view:'auto', voice:'', rate:1, pause:2.5, handsFree:true, speak:true, mode:'free'
+};
+const S = Object.assign({}, DEFAULTS);
+function loadJSON(k, d){ try { const v = JSON.parse(localStorage.getItem(LS+k)); return v == null ? d : v; } catch(e){ return d; } }
+function saveJSON(k, v){ try { localStorage.setItem(LS+k, JSON.stringify(v)); } catch(e){} }
+Object.assign(S, loadJSON('settings', {}));
+if (!LEVELS[S.level]) S.level = 'C1';
+function saveSettings(){ saveJSON('settings', S); }
+
+let errorLog = loadJSON('errors', []);     // [{said, items:[{type,from,to,why,mastered}], mode, level, at}]
+let vocab = loadJSON('vocab', []);         // [{word, base, meaning, en, example, at}]
+let sessions = loadJSON('sessions', []);   // [{start,end,mode,level,userSec,tutorSec,turns,longestWords,cost,report}]
+let usage = loadJSON('usage', {});         // {YYYY-MM:{in,out,cw,cr,cost}}
+function saveErrors(){ saveJSON('errors', errorLog); }
+function saveVocab(){ saveJSON('vocab', vocab); }
+function saveSessions(){ saveJSON('sessions', sessions); }
+function saveUsage(){ saveJSON('usage', usage); }
+
+/* ---------------- DOM ---------------- */
+const $ = id => document.getElementById(id);
+const chat = $('chat'), scroller = $('scroller');
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const hasTTS = 'speechSynthesis' in window;
+
+let mode = ['free','exam','training'].includes(S.mode) ? S.mode : 'free';
+let history = [];
+let state = 'idle';
+let currentAbort = null;
+let sess = null;             // current session stats
+let currentDrill = null;     // training: item being drilled
+let afterSpeech = null;      // callback instead of auto-listen after the tutor finished speaking
+let installPrompt = null;
+
+/* ---------------- Prompt ---------------- */
+function systemPrompt(){
+  const L = S.level;
+  const maxF = S.strict === 'all' ? 6 : 3;
+  const corrRule = S.strict === 'off'
+    ? 'Schreib nach der Markierung immer nur: OK'
+    : `Danach Zeilen zum LETZTEN Beitrag des Lernenden, ohne spitze Klammern:
+F: fehlerhafte Stelle wörtlich => korrigierte Version || sehr kurze Erklärung auf Deutsch
+W: korrekter, aber einfacher oder unidiomatischer Ausdruck => natürlichere Alternative auf Niveau ${L} || kurzer Hinweis
+Höchstens ${maxF} F-Zeilen (die wichtigsten zuerst${S.strict==='main' ? ', nur echte Fehler, keine Kleinigkeiten' : ''}) und höchstens 2 W-Zeilen${L === 'A2' || L === 'B1' ? ' (auf A2 und B1 meist keine W-Zeilen, die Lernenden sollen erst einmal flüssig werden)' : ''}.
+Wenn alles korrekt ist, oder wenn die letzte Nachricht nur ein Befehl in eckigen Klammern war: OK`;
+
+  const scen = SCENARIOS.find(s => s.k === $('scenario').value) || SCENARIOS[0];
+  const topic = $('topic').value.trim();
+  const free = `MODUS: Gespräch.
+${scen.prompt ? scen.prompt + ' Bleib in der Rolle; passe Wortschatz und Tempo an Niveau ' + L + ' an.' : `- ${topic ? 'Gewünschtes Thema: ' + topic + '.' : 'Wähle selbst abwechslungsreiche Themen, die zum Niveau passen.'}
+- Knüpfe an die Interessen des Lernenden an, aber nicht nur an seine Arbeit.
+- Reagiere echt auf den Inhalt, bring eigene plausible Meinungen und Erfahrungen ein und widersprich ab und zu höflich, damit er begründen muss.`}`;
+
+  const ex = EXAM[L];
+  const exam = `MODUS: Simulation der mündlichen Prüfung ${ex.name}. Du spielst die Prüferin und zugleich den Mitprüfling (Partner). Bleib in der Rolle, sprich wie in einer echten Prüfung, kurz und klar.
+Der Lernende steuert den Ablauf mit Befehlen in eckigen Klammern:
+${ex.rules}
+[BEWERTUNG] Gib eine ehrliche Einschätzung des bisherigen Gesprächs nach den telc-Kriterien: Aufgabenbewältigung, Flüssigkeit, Ausdruck und Spektrum, Korrektheit${L==='A2'||L==='B1' ? ' (gemessen am Niveau ' + L + ')' : ''}. Je Kriterium eine Stufe von A (sehr gut) bis D (unzureichend) mit kurzer Begründung, dann die drei wichtigsten Dinge zum Üben. Dieser gesprochene Teil darf ausnahmsweise bis zu zwölf Sätze lang sein, weiterhin ohne Listen.
+Außerhalb dieser Befehle reagierst du einfach prüfungsgerecht auf das, was er sagt; als Partner meist zwei bis vier Sätze.`;
+
+  const training = `MODUS: Fehler-Training. Mit [ÜBUNG] bekommst du eine Zielstruktur aus den früheren Fehlern des Lernenden.
+- Stell dann EINE kurze Frage oder beschreib eine Mini-Situation (ein bis zwei Sätze), die ihn ganz natürlich dazu bringt, genau diese Struktur zu verwenden. Verrate die Lösung nicht und nenne die Regel nicht.
+- Auf seine Antwort: Sag in ein bis zwei Sätzen, ob er die Zielstruktur getroffen hat; wenn nicht, nenn die richtige Form. Stell danach KEINE neue Frage, das macht die App.
+- Im Korrekturteil nach seiner Antwort zusätzlich eine Zeile: ZIEL: OK (Zielstruktur korrekt verwendet) oder ZIEL: NEIN.`;
+
+  const modeBlock = mode === 'exam' ? exam : mode === 'training' ? training : free;
+
+  return `Du bist eine erfahrene, freundliche Deutschlehrerin und Sprechpartnerin (Muttersprachlerin, Hochdeutsch). Ihr führt ein GESPROCHENES Gespräch: Deine Antwort wird per Sprachausgabe vorgelesen, die Beiträge des Lernenden kommen per Spracherkennung.
+
+LERNENDER
+- Aktuelles Übungsniveau: ${L}. Langfristiges Ziel: telc Deutsch C1. Er versteht viel, spricht aber noch nicht flüssig genug; deshalb übt er bewusst auch auf niedrigeren Niveaus, um Tempo und Sicherheit aufzubauen.
+- Über ihn: ${S.about || 'keine Angaben'}
+
+${LEVEL_PROMPT[L]}
+
+SPRACHERKENNUNG
+- Korrigiere NICHT Groß- und Kleinschreibung, Zeichensetzung oder offensichtliche Erkennungsfehler (ähnlich klingende Wörter, fehlende Satzzeichen). Konzentriere dich auf Grammatik, Wortwahl und Satzbau.
+- Wenn ein Beitrag unverständlich ist, frag freundlich nach.
+
+DEIN GESPROCHENER TEIL
+- Natürliches gesprochenes Deutsch. Keine Listen, kein Markdown, keine Emojis, keine Abkürzungen (schreib „zum Beispiel“ aus), Zahlen möglichst als Wörter.
+- Kurz: meist zwei bis vier Sätze, damit der Lernende mehr spricht als du. Ende fast immer mit einer offenen Frage.
+- Fehler höchstens beiläufig aufgreifen, indem du die richtige Form natürlich verwendest. Die eigentlichen Korrekturen kommen in den Korrekturteil.
+- Wenn er Englisch spricht oder um eine Erklärung bittet, hilf kurz und führ dann auf Deutsch weiter.
+- Wenn er offensichtlich einen verbesserten Satz nachspricht, bestätige kurz und führ das Gespräch weiter.
+
+SONDERBEFEHLE (gelten in jedem Modus)
+[BESSER] <Satz>: Formuliere diesen Satz des Lernenden so, wie ein Muttersprachler ihn auf Niveau ${L} sagen würde. Nur den verbesserten Satz, höchstens zwei Varianten, getrennt durch „Oder:“. Keine Erklärung, keine Frage. Korrekturteil: OK
+[VOKABELN] <Wörter>: Führe ein kurzes Gespräch, in dem er diese Wörter aktiv benutzen muss: Stell nacheinander Fragen, bei denen genau ein Zielwort natürlich in der Antwort vorkommt; du darfst es nennen („Benutz mal das Wort …“). Ein Wort pro Frage.
+[BERICHT]: Kurzer mündlicher Bericht zur heutigen Sitzung in höchstens acht Sätzen: Gesamteindruck, je eine Stufe A bis D für Flüssigkeit, Ausdruck und Korrektheit (gemessen am Niveau ${L}), die drei wichtigsten Schwerpunkte für das nächste Mal, und eine ehrliche Empfehlung, ob er auf diesem Niveau bleiben, eine Stufe höher oder niedriger üben sollte. Keine Frage am Ende. Korrekturteil: OK
+
+${modeBlock}
+
+AUSGABEFORMAT (immer, ohne Ausnahme)
+Zuerst nur dein gesprochener Text. Dann eine eigene Zeile mit genau: §§KORREKTUR§§
+${corrRule}
+Nach der Markierung kommt nichts anderes mehr.`;
+}
+
+/* ---------------- UI helpers ---------------- */
+function scrollDown(){ requestAnimationFrame(() => { scroller.scrollTop = scroller.scrollHeight; }); }
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function chip(text, cls){ removeWelcome(); const c = el('div', 'chip' + (cls ? ' ' + cls : ''), text); chat.appendChild(c); scrollDown(); return c; }
+function removeWelcome(){ const w = $('welcome'); if (w) w.remove(); }
+function download(name, text, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' }));
+  a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+let timerInt = null, listenStart = 0;
+function setState(s, text){
+  state = s;
+  const st = $('status'); st.className = 'status ' + s;
+  const labels = { idle:'Bereit', listening:'Ich höre zu …', thinking:'Denke nach …', speaking:'Spreche …' };
+  $('statusText').textContent = text || labels[s];
+  const mic = $('btnMic');
+  mic.classList.toggle('listening', s === 'listening');
+  mic.classList.toggle('busy', s === 'thinking' || s === 'speaking');
+  $('micLabel').textContent = s === 'listening' ? 'Fertig' : (s === 'speaking' || s === 'thinking') ? 'Stopp' : 'Sprechen';
+  $('btnDiscard').classList.toggle('show', s === 'listening');
+  clearInterval(timerInt);
+  if (s === 'listening') {
+    const hint = (mode === 'exam' || !S.handsFree) ? ' · Klick oder Leertaste zum Senden' : '';
+    const tick = () => { const sec = Math.floor((Date.now() - listenStart)/1000); $('statusText').textContent = `Ich höre zu · ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}${hint}`; };
+    tick(); timerInt = setInterval(tick, 500);
+  }
+  updateButtons();
+}
+function updateButtons(){
+  $('btnBetter').disabled = !lastUserText() || state === 'listening';
+  $('btnEndSession').disabled = !sess || state === 'listening';
+}
+
+function welcome(){
+  chat.innerHTML = '';
+  const w = el('div', 'welcome'); w.id = 'welcome';
+  let banner = '';
+  if (!SR) banner = '<div class="banner">Spracherkennung wird in diesem Browser nicht unterstützt. Bitte in <b>Microsoft Edge</b> oder <b>Google Chrome</b> öffnen. Tippen funktioniert trotzdem.</div>';
+  else if (!S.apiKey) banner = '<div class="banner">Zuerst unter ⚙︎ den Claude API-Schlüssel eintragen.</div>';
+  else if (installPrompt) banner = '<div class="banner info">Du kannst den Sprechtrainer als App installieren – dann startet er vom Startbildschirm ohne Browserleiste. <button class="pill" id="btnInstall" style="margin-left:6px">App installieren</button></div>';
+  const L = S.level;
+  if (mode === 'free') {
+    w.innerHTML = banner + `<h1>Gespräch · ${L}</h1>
+      <p>${L === 'A2' || L === 'B1' ? 'Hier geht es um Tempo und Sicherheit: kurze Sätze, flüssig, ohne lange nachzudenken. Die Tutorin spricht einfacher und langsamer.' : 'Wir unterhalten uns frei auf Deutsch. Ich halte meine Antworten kurz, damit du mehr sprichst, und zeige deine Fehler unter jeder Nachricht.'}</p>
+      <ol><li>Oben ein Szenario wählen (Rollenspiel) oder ein Thema eintragen – oder beides leer lassen.</li>
+      <li><b>Gespräch starten</b> – ich fange an.</li>
+      <li>Mikrofon antippen oder <kbd>Leertaste</kbd> und sprechen. Freihändig sende ich automatisch, wenn du eine Pause machst.</li>
+      <li>Tippe auf ein Wort in meinen Antworten, um es nachzuschlagen. <b>Sag's besser</b> zeigt dir deinen letzten Satz, wie ein Muttersprachler ihn sagen würde – sprich ihn nach.</li></ol>
+      <div class="actions"><button class="pill primary" onclick="startFree()">Gespräch starten</button></div>`;
+  } else if (mode === 'exam') {
+    const ex = EXAM[L];
+    w.innerHTML = banner + `<h1>${ex.name} · Mündlich</h1>
+      <p>Ich spiele Prüferin und Partner. Die Teile folgen dem Aufbau der echten Prüfung.</p>
+      <ol>${ex.parts.filter(p => p.k !== 'EVAL').map(p => `<li><b>${p.label}</b> – ${p.sub}${p.timer ? ` (Timer: ${Math.round(p.timer/60)} min, startet automatisch, wenn du zu sprechen beginnst)` : ''}</li>`).join('')}
+      <li><b>Bewertung</b> – Einschätzung nach telc-Kriterien.</li></ol>
+      <p>In der Prüfung sende ich nie automatisch: Beende deinen Beitrag mit Klick aufs Mikrofon oder <kbd>Leertaste</kbd>. Korrekturen bleiben eingeklappt, damit es fließt.</p>
+      <div class="actions"><button class="pill primary" onclick="examCmd('${ex.parts[0].k}')">Mit ${ex.parts[0].label} beginnen</button></div>`;
+  } else {
+    const pool = drillPool();
+    const open = pool.filter(i => i.mastered < 3).length;
+    w.innerHTML = banner + `<h1>Fehler-Training</h1>
+      <p>Ich baue aus deinen gesammelten Fehlern kleine Situationen, in denen du die richtige Struktur selbst sagen musst. Dreimal getroffen = sitzt.</p>
+      <ul><li>${pool.length ? `<b>${open}</b> von ${pool.length} Strukturen sind noch offen.` : 'Noch keine Fehler gesammelt – sprich erst ein paar Minuten im Gespräch.'}</li>
+      <li>Freihändig geht es nach jeder Übung automatisch weiter; sonst <b>Nächste Übung</b>.</li></ul>
+      <div class="actions"><button class="pill primary" onclick="nextDrill()" ${open ? '' : 'disabled'}>Erste Übung</button></div>`;
+  }
+  chat.appendChild(w);
+  const ib = $('btnInstall'); if (ib) ib.onclick = doInstall;
+}
+
+/* ---------------- Session stats ---------------- */
+function ensureSession(){
+  if (!sess) sess = { start:Date.now(), end:null, mode, level:S.level, userSec:0, tutorSec:0, turns:0, longestWords:0, cost:0, report:null };
+  updateButtons();
+}
+function endSession(){
+  if (sess && sess.turns > 0) { sess.end = Date.now(); sessions.push(sess); saveSessions(); updateBadges(); }
+  sess = null; updateButtons();
+}
+function noteUserTurn(text, spokenSec){
+  ensureSession();
+  sess.turns++;
+  const w = words(text);
+  sess.longestWords = Math.max(sess.longestWords, w);
+  sess.userSec += spokenSec != null ? spokenSec : w / 2.2;
+}
+function noteTutorTurn(text){ if (sess) sess.tutorSec += words(text) / 2.5; }
+function addUsage(model, u){
+  const c = costOf(model, u);
+  const ym = new Date().toISOString().slice(0,7);
+  const m = usage[ym] || (usage[ym] = { in:0, out:0, cw:0, cr:0, cost:0 });
+  m.in += u.in||0; m.out += u.out||0; m.cw += u.cw||0; m.cr += u.cr||0; m.cost += c;
+  saveUsage();
+  if (sess) sess.cost += c;
+  updateCost();
+}
+function updateCost(){
+  const ym = new Date().toISOString().slice(0,7);
+  const m = usage[ym]; const parts = [];
+  if (sess && sess.cost > 0) parts.push('Sitzung ≈ ' + fmtUSD(sess.cost));
+  if (m) parts.push('Monat ≈ ' + fmtUSD(m.cost));
+  $('costText').textContent = parts.join(' · ');
+}
+function updateBadges(){
+  $('errCount').textContent = errorLog.reduce((n, g) => n + g.items.length, 0);
+  $('vocabCount').textContent = vocab.length;
+  $('streakBadge').textContent = calcStreak(sessions) + ' 🔥';
+}
+
+/* ---------------- Conversation ---------------- */
+function addUserBubble(text){ removeWelcome(); const b = el('div', 'msg user', text); chat.appendChild(b); scrollDown(); return b; }
+function addTutorBubble(kind){
+  removeWelcome();
+  const b = el('div', 'msg tutor' + (kind ? ' ' + kind : ''));
+  if (kind === 'better') b.appendChild(el('span', 'lbl', 'So klingt’s besser – sprich nach'));
+  if (kind === 'report') b.appendChild(el('span', 'lbl', 'Sitzungsbericht'));
+  const t = el('span', 'txt', '…'); b.appendChild(t);
+  chat.appendChild(b); scrollDown();
+  return b;
+}
+function finishTutorBubble(b, spoken){
+  const txt = cleanSpeech(spoken);
+  const t = b.querySelector('.txt'); t.textContent = '';
+  if (!txt) { t.textContent = '…'; return; }
+  for (const tok of txt.split(/(\s+)/)) {
+    if (/\p{L}/u.test(tok)) { const s = el('span', 'w', tok); t.appendChild(s); }
+    else t.appendChild(document.createTextNode(tok));
+  }
+  if (hasTTS) {
+    const r = el('button', 'replay', '↻ Nochmal anhören');
+    r.onclick = () => { stopAll(); speakText(txt, false); };
+    b.appendChild(r);
+  }
+}
+chat.addEventListener('click', e => {
+  const w = e.target.closest('.w'); if (!w) return;
+  const word = w.textContent.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '');
+  if (word) lookupWord(word, w.closest('.msg').querySelector('.txt').textContent, w);
+});
+
+function renderCorrections(after, said, parsed){
+  if (S.strict === 'off' && !parsed.target) return;
+  if (parsed.target) {
+    if (currentDrill) {
+      if (parsed.target === 'OK') { currentDrill.mastered = (currentDrill.mastered||0) + 1; }
+      saveErrors(); updateTrainProgress();
+      const c = chip(parsed.target === 'OK' ? `✓ Getroffen (${currentDrill.mastered}/3)${currentDrill.mastered >= 3 ? ' – sitzt!' : ''}` : '✗ Noch nicht – kommt wieder dran', parsed.target === 'OK' ? 'good' : 'err');
+      after.after(c);
+      currentDrill = null;
+    }
+  }
+  if (S.strict === 'off') return;
+  if (!parsed.items.length) {
+    if (parsed.ok && !parsed.target) after.after(el('div', 'corr ok', '✓ Fehlerfrei'));
+    return;
+  }
+  const box = el('div', 'corr');
+  const collapsed = S.view === 'closed' || (S.view === 'auto' && mode === 'exam');
+  let holder = box;
+  if (collapsed) {
+    const d = el('details'); d.appendChild(el('summary', null, `Korrekturen (${parsed.items.length})`));
+    box.appendChild(d); holder = d;
+  }
+  const items = parsed.items.map(it => Object.assign({ mastered:0 }, it));
+  for (const it of items) holder.appendChild(corrRow(it));
+  after.after(box);
+  // keep the list free of exact repeats (same correction already collected)
+  const known = new Set(); for (const g of errorLog) for (const it of g.items) known.add((it.from + '→' + it.to).toLowerCase());
+  const fresh = items.filter(it => !known.has((it.from + '→' + it.to).toLowerCase()));
+  if (fresh.length) { errorLog.push({ said, items:fresh, mode, level:S.level, at:new Date().toISOString() }); saveErrors(); updateBadges(); }
+}
+function corrRow(it, showMastery){
+  const r = el('div', 'crow ' + (it.type === 'W' ? 'w' : 'f'));
+  if (it.type === 'W') r.appendChild(el('span', 'tag', 'Besser'));
+  r.appendChild(el('span', 'from', it.from));
+  r.appendChild(el('span', 'arrow', '→'));
+  r.appendChild(el('span', 'to', it.to));
+  if (showMastery) r.appendChild(el('span', 'mast', (it.mastered||0) >= 3 ? '✓ sitzt' : `${it.mastered||0}/3`));
+  if (it.why) r.appendChild(el('div', 'why', it.why));
+  return r;
+}
+
+function sendUser(text, opts = {}){
+  text = (text || '').trim();
+  if (!text) return;
+  stopAll();
+  let bubble = null;
+  if (opts.label) chip(opts.label);
+  if (!opts.hidden) { bubble = addUserBubble(text); noteUserTurn(text, opts.spokenSec); if (timer.armed && timer.skip > 0) timer.skip--; }
+  else ensureSession();
+  history.push({ role:'user', content:text });
+  callClaude(bubble, opts.hidden ? null : text, opts);
+}
+
+let activeStream = null;
+async function callClaude(userBubble, said, opts = {}){
+  if (!S.apiKey) { openSettings('Bitte zuerst deinen Claude API-Schlüssel eintragen.'); setState('idle'); return; }
+  setState('thinking');
+  const bubble = addTutorBubble(opts.kind);
+  const ctrl = new AbortController(); currentAbort = ctrl;
+  const gen = ++speechGen;
+  speechQueue = []; streamDone = false; afterSpeech = opts.afterSpeech || null;
+  let consumed = 0;
+  const ctx = { full:'', bubble, committed:false, usage:{ in:0, out:0, cw:0, cr:0 } };
+  activeStream = ctx;
+
+  const onText = () => {
+    const full = ctx.full;
+    const { spoken, corr } = splitOutput(full);
+    bubble.querySelector('.txt').textContent = cleanSpeech(spoken) || '…';
+    const upto = corr !== null ? spoken.length : lastBoundary(spoken);
+    if (upto > consumed) { enqueueSpeech(spoken.slice(consumed, upto), gen); consumed = upto; }
+    scrollDown();
+  };
+
+  const messages = buildApiMessages(history, 40);
+  const last = messages[messages.length - 1];
+  messages[messages.length - 1] = { role:'user', content:[{ type:'text', text:last.content, cache_control:{ type:'ephemeral' } }] };
+  const model = S.model;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', signal:ctrl.signal,
+      headers:{ 'content-type':'application/json', 'x-api-key':S.apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model, max_tokens:1500, stream:true,
+        system:[{ type:'text', text:systemPrompt(), cache_control:{ type:'ephemeral' } }], messages })
+    });
+    if (!res.ok) {
+      let msg = ''; try { const j = await res.json(); msg = j.error && j.error.message || ''; } catch(e){}
+      throw Object.assign(new Error(msg), { status:res.status });
+    }
+    const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream:true }).replace(/\r/g,'');
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const evt = buf.slice(0, i); buf = buf.slice(i + 2);
+        for (const line of evt.split('\n')) {
+          if (!line.startsWith('data:')) continue;
+          let d; try { d = JSON.parse(line.slice(5)); } catch(e){ continue; }
+          if (d.type === 'content_block_delta' && d.delta && d.delta.type === 'text_delta') { ctx.full += d.delta.text; onText(); }
+          else if (d.type === 'message_start' && d.message && d.message.usage) {
+            const u = d.message.usage; ctx.usage.in = u.input_tokens||0; ctx.usage.cw = u.cache_creation_input_tokens||0; ctx.usage.cr = u.cache_read_input_tokens||0;
+          }
+          else if (d.type === 'message_delta' && d.usage) { ctx.usage.out = d.usage.output_tokens||ctx.usage.out; }
+          else if (d.type === 'error') throw Object.assign(new Error(d.error && d.error.message || 'Fehler'), { status:d.error && d.error.type === 'overloaded_error' ? 529 : 500 });
+        }
+      }
+    }
+  } catch (err) {
+    if (err.name === 'AbortError' || ctx.committed) { addUsage(model, ctx.usage); return; }
+    ctx.committed = true; activeStream = null;
+    bubble.remove();
+    showApiError(err, opts);
+    setState('idle');
+    return;
+  } finally { if (currentAbort === ctrl) currentAbort = null; }
+  if (ctx.committed) return;
+  ctx.committed = true; activeStream = null;
+  addUsage(model, ctx.usage);
+
+  const full = ctx.full;
+  const { spoken, corr } = splitOutput(full);
+  if (spoken.length > consumed) enqueueSpeech(spoken.slice(consumed), gen);
+  history.push({ role:'assistant', content:full });
+  finishTutorBubble(bubble, spoken);
+  noteTutorTurn(spoken);
+  if (opts.kind === 'report' && sess) { sess.report = cleanSpeech(spoken); }
+  const parsed = parseCorrections(corr);
+  if (userBubble && corr !== null) renderCorrections(userBubble, said, parsed);
+  else if (parsed.target && currentDrill) renderCorrections(bubble, said, parsed);
+  if (mode === 'training' && currentDrill && userBubble && !parsed.target) currentDrill = null; // model forgot the ZIEL line → move on
+  scrollDown();
+  streamDone = true;
+  if (!speakingNow && !speechQueue.length) onSpeechDone(gen);
+}
+
+function showApiError(err, opts){
+  const s = err.status;
+  let msg = err.message || 'Unbekannter Fehler';
+  if (s === 401) msg = 'API-Schlüssel ungültig. Bitte in den Einstellungen prüfen.';
+  else if (s === 400 && /credit balance/i.test(err.message||'')) msg = 'Guthaben aufgebraucht – die API-Credits sind für diesen Monat verbraucht.';
+  else if (s === 404) msg = 'Modell nicht gefunden. Bitte in den Einstellungen ein anderes Modell wählen.';
+  else if (s === 429) msg = 'Zu viele Anfragen. Kurz warten und nochmal versuchen.';
+  else if (s === 529 || s === 503) msg = 'Server gerade überlastet. Gleich nochmal versuchen.';
+  else if (!s) msg = 'Keine Verbindung zur API. Internet prüfen.' + (err.message ? ' (' + err.message + ')' : '');
+  const c = chip(msg, 'err');
+  const retry = el('button', null, 'Nochmal');
+  retry.onclick = () => { c.remove(); callClaude(lastUserBubble(), lastUserText(), opts); };
+  c.appendChild(retry);
+  if (s === 401 || s === 404) openSettings(msg);
+}
+function lastUserBubble(){ const all = chat.querySelectorAll('.msg.user'); return all[all.length-1] || null; }
+function lastUserText(){ const b = lastUserBubble(); return b ? b.textContent : null; }
+
+function newConversation(){
+  stopAll(); endSession(); history = []; currentDrill = null; stopTimer(); welcome(); setState('idle'); updateCost();
+}
+
+function startFree(){
+  newConversation();
+  const topic = $('topic').value.trim();
+  const scen = SCENARIOS.find(s => s.k === $('scenario').value) || SCENARIOS[0];
+  const label = scen.k ? 'Rollenspiel · ' + scen.label : topic ? 'Gespräch · ' + topic : 'Gespräch gestartet';
+  sendUser(`[START] Begrüße mich kurz und beginne ${scen.k ? 'das Rollenspiel' : 'das Gespräch'} ${topic ? 'zum Thema: ' + topic : scen.k ? '' : 'mit einem Thema deiner Wahl'}.`, { hidden:true, label });
+}
+function examCmd(k){
+  const p = EXAM[S.level].parts.find(x => x.k === k); if (!p) return;
+  if (history.length === 0) removeWelcome();
+  stopTimer();
+  if (p.timer) armTimer(p.timer, p.label, p.after || 0);
+  sendUser(p.cmd, { hidden:true, label:`${p.label}${p.sub ? ' · ' + p.sub : ''}` });
+}
+function sayBetter(){
+  const t = lastUserText(); if (!t) return;
+  sendUser('[BESSER] ' + t, { hidden:true, kind:'better', afterSpeech:() => { if (S.handsFree && SR) startListening(); } });
+}
+function endSessionWithReport(){
+  if (!sess) return;
+  sendUser('[BERICHT]', { hidden:true, label:'Sitzungsbericht', kind:'report', afterSpeech:() => { endSession(); chip('Sitzung gespeichert – unter Statistik findest du den Bericht wieder.'); } });
+}
+function vocabWarmup(){
+  if (!vocab.length) { chip('Noch keine Vokabeln gespeichert – tippe im Gespräch auf ein Wort.', 'err'); return; }
+  const pick = [...vocab].sort(() => Math.random() - .5).slice(0, 6).map(v => v.base || v.word);
+  if (mode !== 'free') switchMode('free');
+  newConversation();
+  sendUser('[VOKABELN] ' + pick.join(', '), { hidden:true, label:'Vokabel-Warm-up · ' + pick.join(', ') });
+}
+
+/* ---------------- Training ---------------- */
+function drillPool(){
+  const out = [];
+  for (const g of errorLog) for (const it of g.items) { if (it.mastered == null) it.mastered = 0; out.push(it); }
+  return out.filter(i => i.type === 'F').concat(out.filter(i => i.type === 'W'));
+}
+function updateTrainProgress(){
+  const pool = drillPool(); const done = pool.filter(i => i.mastered >= 3).length;
+  $('trainProgress').textContent = pool.length ? `${done} von ${pool.length} Strukturen sitzen` : 'Noch keine Fehler gesammelt';
+  $('btnNextDrill').disabled = done === pool.length;
+}
+function nextDrill(){
+  const pool = drillPool().filter(i => i.mastered < 3);
+  if (!pool.length) { chip('Alle gesammelten Strukturen sitzen – sammle im Gespräch neue.', 'good'); return; }
+  // prefer least-practised, then random
+  const minM = Math.min(...pool.map(i => i.mastered));
+  const cands = pool.filter(i => i.mastered === minM);
+  currentDrill = cands[Math.floor(Math.random() * cands.length)];
+  if (history.length === 0) removeWelcome();
+  sendUser(`[ÜBUNG] Zielstruktur: „${currentDrill.from}“ → „${currentDrill.to}“${currentDrill.why ? ' (' + currentDrill.why + ')' : ''}`, { hidden:true, label:'Übung · ' + currentDrill.to });
+}
+
+/* ---------------- Word lookup ---------------- */
+let popEl = null;
+function closePop(){ if (popEl) { popEl.remove(); popEl = null; } }
+document.addEventListener('click', e => { if (popEl && !popEl.contains(e.target) && !e.target.closest('.w')) closePop(); });
+async function lookupWord(word, sentence, anchor){
+  closePop();
+  if (!S.apiKey) { openSettings('Bitte zuerst deinen Claude API-Schlüssel eintragen.'); return; }
+  const p = el('div', 'wpop'); popEl = p;
+  p.innerHTML = `<h4>${word}</h4><div class="en">Schlage nach …</div>`;
+  document.body.appendChild(p);
+  const r = anchor.getBoundingClientRect();
+  const top = r.bottom + 8 + 260 > window.innerHeight ? Math.max(8, r.top - 8 - 240) : r.bottom + 8;
+  p.style.top = top + 'px'; p.style.left = Math.min(Math.max(8, r.left), window.innerWidth - p.offsetWidth - 8) + 'px';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{ 'content-type':'application/json', 'x-api-key':S.apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-haiku-5-5', max_tokens:300,
+        system:'Du bist ein deutsches Lernwörterbuch. Antworte NUR mit einem JSON-Objekt, ohne Markdown, mit den Feldern: grundform (Nomen mit Artikel und Pluralendung, Verben im Infinitiv), bedeutung (ein kurzer Satz auf einfachem Deutsch für Niveau ' + S.level + '), englisch (ein bis drei Wörter), beispiel (ein neuer, natürlicher Beispielsatz).',
+        messages:[{ role:'user', content:`Wort: "${word}"\nSatz: "${sentence.slice(0, 400)}"` }] })
+    });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error && j.error.message || res.status);
+    addUsage('claude-haiku-5-5', { in:j.usage && j.usage.input_tokens || 0, out:j.usage && j.usage.output_tokens || 0 });
+    const text = (j.content || []).map(c => c.text || '').join('');
+    const m = text.match(/\{[\s\S]*\}/); const d = JSON.parse(m ? m[0] : text);
+    if (popEl !== p) return;
+    p.innerHTML = '';
+    p.appendChild(el('h4', null, d.grundform || word));
+    p.appendChild(el('div', 'en', d.englisch || ''));
+    p.appendChild(el('div', null, d.bedeutung || ''));
+    if (d.beispiel) p.appendChild(el('div', 'ex', '„' + d.beispiel + '“'));
+    const row = el('div', 'row');
+    const hear = el('button', 'pill', '🔊'); hear.onclick = () => { stopSpeaking(); speakText((d.grundform || word) + '. ' + (d.beispiel || ''), false); };
+    const save = el('button', 'pill primary', 'Merken');
+    const exists = vocab.some(v => (v.base || v.word).toLowerCase() === (d.grundform || word).toLowerCase());
+    if (exists) { save.textContent = 'Gespeichert ✓'; save.disabled = true; }
+    save.onclick = () => { vocab.push({ word, base:d.grundform || word, meaning:d.bedeutung || '', en:d.englisch || '', example:d.beispiel || '', at:new Date().toISOString() }); saveVocab(); updateBadges(); save.textContent = 'Gespeichert ✓'; save.disabled = true; };
+    row.append(hear, save); p.appendChild(row);
+  } catch (e) {
+    if (popEl === p) p.innerHTML = `<h4>${word}</h4><div class="en">Nachschlagen fehlgeschlagen (${e.message || e}).</div>`;
+  }
+}
+
+/* ---------------- Timers ---------------- */
+let timer = { armed:0, skip:0, kind:'', end:0, int:null, warned:false };
+function armTimer(sec, kind, skip){
+  stopTimer(); timer.armed = sec; timer.kind = kind; timer.skip = skip || 0;
+  const t = $('timer'); t.hidden = false; t.className = 'timer armed';
+  $('timerText').textContent = fmtClock(sec); $('timerKind').textContent = skip ? 'startet mit deiner Präsentation' : 'startet, wenn du sprichst';
+}
+function startTimer(sec, kind){
+  stopTimer(); timer.end = Date.now() + sec*1000; timer.kind = kind; timer.warned = false;
+  const t = $('timer'); t.hidden = false; t.className = 'timer';
+  $('timerKind').textContent = kind;
+  const tick = () => {
+    const left = Math.round((timer.end - Date.now())/1000);
+    $('timerText').textContent = fmtClock(Math.max(0, left));
+    if (left <= 30 && !timer.warned) { timer.warned = true; t.className = 'timer warn'; chime(1); }
+    if (left <= 0) { t.className = 'timer over'; $('timerKind').textContent = kind + ' – Zeit um, bring den Gedanken zu Ende'; chime(2); clearInterval(timer.int); timer.int = null; }
+  };
+  tick(); timer.int = setInterval(tick, 500);
+}
+function stopTimer(){ clearInterval(timer.int); timer.int = null; timer.armed = 0; $('timer').hidden = true; }
+function fmtClock(s){ return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+let audioCtx = null;
+function chime(n){
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    for (let i = 0; i < n; i++) {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
+      const t0 = audioCtx.currentTime + i*0.25;
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.15, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.2);
+      o.start(t0); o.stop(t0 + 0.22);
+    }
+  } catch(e){}
+}
+$('timerStop').onclick = stopTimer;
+$('prepStart').onclick = () => startTimer(Number($('prepMin').value) * 60, 'Vorbereitung');
+
+/* ---------------- Speech output ---------------- */
+let speechQueue = [], speakingNow = false, streamDone = true, speechGen = 0, currentUtt = null, voices = [];
+function pickVoice(){ if (!hasTTS) return null; return voices.find(v => v.name === S.voice) || voices[0] || null; }
+function enqueueSpeech(text, gen){
+  if (!S.speak || !hasTTS || gen !== speechGen) return;
+  for (const s of splitSentences(cleanSpeech(text))) speechQueue.push(s);
+  if (!speakingNow) speakNext(gen);
+}
+function speakNext(gen){
+  if (gen !== speechGen) return;
+  if (!hasTTS) speechQueue = [];
+  if (!speechQueue.length) { speakingNow = false; if (streamDone) onSpeechDone(gen); return; }
+  speakingNow = true;
+  setState('speaking');
+  const u = new SpeechSynthesisUtterance(speechQueue.shift());
+  const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'de-DE';
+  u.rate = (Number(S.rate) || 1) * LEVELS[S.level].rate;
+  u.onend = u.onerror = () => speakNext(gen);
+  currentUtt = u;
+  speechSynthesis.speak(u);
+}
+function speakText(text, autoListen){
+  const gen = ++speechGen;
+  speechQueue = splitSentences(text); streamDone = true; afterSpeech = autoListen ? null : () => {};
+  speakNext(gen);
+}
+function onSpeechDone(gen){
+  if (gen !== speechGen) return;
+  speakingNow = false;
+  setState('idle');
+  const cb = afterSpeech; afterSpeech = null;
+  if (cb) { cb(); return; }
+  if (mode === 'training' && !currentDrill && history.length) {
+    // a drill was just judged → continue automatically when hands-free
+    if (S.handsFree) { setTimeout(() => { if (state === 'idle' && mode === 'training') nextDrill(); }, 900); }
+    return;
+  }
+  if (S.handsFree && SR && document.visibilityState === 'visible' && !document.querySelector('dialog[open]')) startListening();
+}
+function stopSpeaking(){ speechGen++; speechQueue = []; speakingNow = false; if (hasTTS) speechSynthesis.cancel(); }
+function stopAll(){
+  if (currentAbort) { currentAbort.abort(); currentAbort = null; }
+  if (activeStream && !activeStream.committed) {
+    const ctx = activeStream; ctx.committed = true; activeStream = null;
+    if (ctx.full.trim()) { history.push({ role:'assistant', content:ctx.full }); finishTutorBubble(ctx.bubble, splitOutput(ctx.full).spoken); }
+    else ctx.bubble.remove();
+  }
+  stopSpeaking(); afterSpeech = null;
+  if (listening || finishing) discardListening();
+}
+function loadVoices(){
+  if (!hasTTS) return;
+  const all = speechSynthesis.getVoices().filter(v => /^de/i.test(v.lang));
+  const score = v => (/natural/i.test(v.name) ? 0 : /online/i.test(v.name) ? 1 : /google/i.test(v.name) ? 2 : 3) + (/de[-_]DE/i.test(v.lang) ? 0 : .5);
+  voices = all.sort((a,b) => score(a) - score(b));
+  const sel = $('setVoice'); sel.innerHTML = '';
+  if (!voices.length) { sel.appendChild(el('option', null, 'Keine deutsche Stimme gefunden')); return; }
+  for (const v of voices) { const o = el('option', null, `${v.name} (${v.lang})`); o.value = v.name; sel.appendChild(o); }
+  if (!voices.some(v => v.name === S.voice)) { S.voice = voices[0].name; saveSettings(); }
+  sel.value = S.voice;
+}
+
+/* ---------------- Speech input ---------------- */
+let rec = null, listening = false, finishing = false, prevFinal = '', curFinal = '', interim = '';
+let silenceTimer = null, finalizeFn = null, quickRestarts = 0, recStartedAt = 0, draftEl = null;
+function transcript(){ return [prevFinal, curFinal].filter(Boolean).join(' ').trim(); }
+function startListening(){
+  if (!SR) { chip('Spracherkennung nicht verfügbar – bitte Edge oder Chrome verwenden.', 'err'); return; }
+  if (!S.apiKey) { openSettings('Bitte zuerst deinen Claude API-Schlüssel eintragen.'); return; }
+  stopAll(); closePop();
+  prevFinal = ''; curFinal = ''; interim = ''; quickRestarts = 0;
+  listening = true; listenStart = Date.now();
+  removeWelcome();
+  draftEl = el('div', 'msg draft'); draftEl.innerHTML = '<span class="interim">Sprich jetzt …</span>';
+  chat.appendChild(draftEl); scrollDown();
+  setState('listening');
+  if (timer.armed && timer.skip <= 0) { const s = timer.armed, k = timer.kind; timer.armed = 0; startTimer(s, k); }
+  startRecInstance();
+}
+function startRecInstance(){
+  prevFinal = transcript(); curFinal = '';
+  rec = new SR();
+  rec.lang = 'de-DE'; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+  rec.onresult = e => {
+    let fin = '', intr = '';
+    for (let i = 0; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fin += ' ' + r[0].transcript; else intr += ' ' + r[0].transcript; }
+    curFinal = fin.trim(); interim = intr.trim();
+    updateDraft(); armSilence();
+  };
+  rec.onerror = e => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { discardListening(); chip('Kein Mikrofon-Zugriff. Bitte im Browser erlauben (Schloss-Symbol in der Adressleiste).', 'err'); }
+    else if (e.error === 'network') { discardListening(); chip('Spracherkennung braucht eine Internetverbindung.', 'err'); }
+    else if (e.error === 'audio-capture') { discardListening(); chip('Kein Mikrofon gefunden.', 'err'); }
+  };
+  rec.onend = () => {
+    if (finishing && finalizeFn) { finalizeFn(); return; }
+    if (listening) {
+      if (Date.now() - recStartedAt < 1000) quickRestarts++; else quickRestarts = 0;
+      if (quickRestarts > 5) { discardListening(); chip('Spracherkennung bricht ständig ab – Mikrofon prüfen.', 'err'); return; }
+      try { startRecInstance(); } catch(e){}
+    }
+  };
+  recStartedAt = Date.now();
+  try { rec.start(); } catch(e){}
+}
+function updateDraft(){
+  if (!draftEl) return;
+  const fin = transcript();
+  draftEl.innerHTML = '';
+  if (fin) draftEl.appendChild(document.createTextNode(fin + ' '));
+  if (interim) draftEl.appendChild(el('span', 'interim', interim));
+  if (!fin && !interim) draftEl.innerHTML = '<span class="interim">Sprich jetzt …</span>';
+  scrollDown();
+}
+function armSilence(){
+  clearTimeout(silenceTimer);
+  if (!S.handsFree || mode === 'exam') return;
+  silenceTimer = setTimeout(() => { if (listening && (transcript() || interim)) finishListening(); }, (Number(S.pause) || 2.5) * 1000);
+}
+function finishListening(){
+  if (!listening) return;
+  listening = false; finishing = true; clearTimeout(silenceTimer);
+  setState('thinking', 'Verarbeite …');
+  let done = false;
+  const spokenSec = (Date.now() - listenStart) / 1000;
+  finalizeFn = () => {
+    if (done) return; done = true; finishing = false; finalizeFn = null;
+    const text = [transcript(), interim].filter(Boolean).join(' ').trim();
+    if (draftEl) { draftEl.remove(); draftEl = null; }
+    if (text) sendUser(text, { spokenSec }); else setState('idle');
+  };
+  try { rec.stop(); } catch(e){ finalizeFn(); }
+  setTimeout(() => finalizeFn && finalizeFn(), 1500);
+}
+function discardListening(){
+  listening = false; finishing = false; finalizeFn = null; clearTimeout(silenceTimer);
+  if (rec) { rec.onend = null; try { rec.abort(); } catch(e){} }
+  if (draftEl) { draftEl.remove(); draftEl = null; }
+  setState('idle');
+}
+
+/* ---------------- Mic button & keys ---------------- */
+function micAction(){
+  if (state === 'listening') finishListening();
+  else if (state === 'speaking' || state === 'thinking') { stopAll(); setState('idle'); if (SR) startListening(); }
+  else startListening();
+}
+$('btnMic').onclick = () => { $('btnMic').blur(); micAction(); };
+$('btnDiscard').onclick = discardListening;
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (document.querySelector('dialog[open]')) return;
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if (e.code === 'Space' && !e.repeat) { e.preventDefault(); micAction(); }
+  if (e.key === 'Escape') { closePop(); if (state === 'listening') discardListening(); else { stopAll(); setState('idle'); } }
+});
+$('textForm').onsubmit = e => {
+  e.preventDefault();
+  const v = $('textInput').value; $('textInput').value = '';
+  if (listening) discardListening();
+  sendUser(v);
+};
+
+/* ---------------- Modes, levels & toolbars ---------------- */
+function renderExamParts(){
+  const box = $('examParts'); box.innerHTML = '';
+  EXAM[S.level].parts.forEach((p, i) => {
+    const b = el('button', 'pill' + (i === 0 ? ' primary' : ''));
+    b.textContent = p.label; if (p.sub) { b.appendChild(document.createTextNode(' ')); b.appendChild(el('small', null, p.sub)); }
+    b.onclick = () => examCmd(p.k); box.appendChild(b);
+  });
+  $('prepMin').value = (S.level === 'C1' || S.level === 'B2') ? '20' : '2';
+}
+function switchMode(m, force){
+  if (m === mode && !force) return;
+  if (!force && history.length && !confirm('Modus wechseln und neues Gespräch beginnen?')) return;
+  mode = m; S.mode = m; saveSettings();
+  document.querySelectorAll('#modeSeg button').forEach(x => x.classList.toggle('active', x.dataset.mode === m));
+  $('toolbarFree').hidden = m !== 'free'; $('toolbarExam').hidden = m !== 'exam'; $('toolbarTraining').hidden = m !== 'training';
+  if (m === 'training') updateTrainProgress();
+  newConversation();
+}
+function setLevel(L, silent){
+  if (!LEVELS[L]) return;
+  if (!silent && L !== S.level && history.length && !confirm('Niveau wechseln und neues Gespräch beginnen?')) return;
+  const changed = L !== S.level;
+  S.level = L; saveSettings();
+  document.querySelectorAll('#levelSeg button').forEach(x => x.classList.toggle('active', x.dataset.level === L));
+  renderExamParts();
+  if (changed || !silent) newConversation();
+}
+document.querySelectorAll('#modeSeg button').forEach(b => b.onclick = () => switchMode(b.dataset.mode));
+document.querySelectorAll('#levelSeg button').forEach(b => b.onclick = () => setLevel(b.dataset.level));
+$('btnStartFree').onclick = startFree;
+$('topic').addEventListener('keydown', e => { if (e.key === 'Enter') startFree(); });
+document.querySelectorAll('[data-action="new"]').forEach(b => b.onclick = () => {
+  if (history.length && !confirm('Aktuelles Gespräch beenden und neu anfangen?')) return;
+  newConversation();
+});
+$('btnNextDrill').onclick = () => { if (state !== 'idle') { stopAll(); setState('idle'); } nextDrill(); };
+$('btnBetter').onclick = sayBetter;
+$('btnEndSession').onclick = endSessionWithReport;
+$('btnVocabWarm').onclick = vocabWarmup;
+$('btnVocabWarm2').onclick = () => { $('dlgVocab').close(); vocabWarmup(); };
+const scenSel = $('scenario');
+for (const s of SCENARIOS) { const o = el('option', null, s.label); o.value = s.k; scenSel.appendChild(o); }
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
+
+/* ---------------- Settings dialog ---------------- */
+function openSettings(note){
+  stopAll();
+  $('settingsNote').hidden = !note; $('settingsNote').textContent = note || '';
+  $('setKey').value = S.apiKey; $('setModel').value = S.model;
+  $('setAbout').value = S.about; $('setStrict').value = S.strict; $('setView').value = S.view;
+  $('setRate').value = S.rate; $('setPause').value = S.pause;
+  $('rateVal').textContent = Number(S.rate).toFixed(2) + '×'; $('pauseVal').textContent = S.pause + ' s';
+  loadVoices();
+  if (!$('dlgSettings').open) $('dlgSettings').showModal();
+}
+$('btnSettings').onclick = () => openSettings();
+$('setRate').oninput = e => $('rateVal').textContent = Number(e.target.value).toFixed(2) + '×';
+$('setPause').oninput = e => $('pauseVal').textContent = e.target.value + ' s';
+$('settingsForm').onsubmit = () => {
+  S.apiKey = $('setKey').value.trim(); S.model = $('setModel').value;
+  S.about = $('setAbout').value.trim(); S.strict = $('setStrict').value; S.view = $('setView').value;
+  S.voice = $('setVoice').value; S.rate = Number($('setRate').value); S.pause = Number($('setPause').value);
+  saveSettings();
+  if ($('welcome')) welcome();
+};
+$('btnForgetKey').onclick = () => { $('setKey').value = ''; S.apiKey = ''; saveSettings(); };
+$('btnTestVoice').onclick = () => {
+  const prev = S.voice, prevRate = S.rate;
+  S.voice = $('setVoice').value; S.rate = Number($('setRate').value);
+  speakText('Hallo! So klinge ich. Wollen wir ein bisschen Deutsch sprechen?', false);
+  S.voice = prev; S.rate = prevRate;
+};
+$('btnBackup').onclick = () => {
+  const s = Object.assign({}, S); delete s.apiKey;
+  download(`sprechtrainer-backup-${new Date().toISOString().slice(0,10)}.json`,
+    JSON.stringify({ app:'sprechtrainer', version:2, settings:s, errors:errorLog, vocab, sessions, usage }, null, 1), 'application/json');
+};
+$('btnRestore').onclick = () => $('restoreFile').click();
+$('restoreFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (d.app !== 'sprechtrainer') throw new Error('kein Sprechtrainer-Backup');
+    if (!confirm('Backup laden? Statistik, Fehlerliste und Vokabeln werden zusammengeführt, Einstellungen übernommen (der API-Schlüssel bleibt).')) return;
+    const key = S.apiKey; Object.assign(S, d.settings || {}); S.apiKey = key; saveSettings();
+    const seen = new Set(errorLog.map(g => g.at)); for (const g of d.errors || []) if (!seen.has(g.at)) errorLog.push(g);
+    const vs = new Set(vocab.map(v => (v.base||v.word).toLowerCase())); for (const v of d.vocab || []) if (!vs.has((v.base||v.word).toLowerCase())) vocab.push(v);
+    const ss = new Set(sessions.map(s => s.start)); for (const s of d.sessions || []) if (!ss.has(s.start)) sessions.push(s);
+    for (const [ym, u] of Object.entries(d.usage || {})) if (!usage[ym]) usage[ym] = u;
+    saveErrors(); saveVocab(); saveSessions(); saveUsage(); updateBadges();
+    $('dlgSettings').close(); setLevel(S.level, true); switchMode(S.mode || 'free', true);
+    chip('Backup geladen.', 'good');
+  } catch (err) { alert('Backup konnte nicht geladen werden: ' + err.message); }
+  e.target.value = '';
+};
+
+/* ---------------- Options ---------------- */
+$('optHandsFree').checked = S.handsFree; $('optSpeak').checked = S.speak;
+$('optHandsFree').onchange = e => { S.handsFree = e.target.checked; saveSettings(); };
+$('optSpeak').onchange = e => { S.speak = e.target.checked; saveSettings(); if (!S.speak) stopSpeaking(); };
+if (!hasTTS) { $('optSpeak').checked = false; $('optSpeak').disabled = true; }
+
+/* ---------------- Error list dialog ---------------- */
+function renderErrList(){
+  const box = $('errList'); box.innerHTML = '';
+  if (!errorLog.length) { box.appendChild(el('div', 'empty', 'Noch keine Korrekturen gesammelt.')); return; }
+  for (const g of [...errorLog].reverse()) {
+    const d = el('div', 'errgroup');
+    d.appendChild(el('div', 'said', `„${g.said}“ · ${g.level || ''} ${new Date(g.at).toLocaleDateString('de-DE')}`));
+    for (const it of g.items) d.appendChild(corrRow(it, true));
+    box.appendChild(d);
+  }
+}
+function errMarkdown(){
+  let md = `# Fehlerliste – Sprechtrainer (${new Date().toLocaleDateString('de-DE')})\n\n`;
+  for (const g of errorLog) {
+    md += `## „${g.said}“ (${g.level || ''})\n`;
+    for (const it of g.items) md += `- ${it.type === 'W' ? '**Besser:** ' : ''}~~${it.from}~~ → **${it.to}**${it.why ? ' – ' + it.why : ''}${(it.mastered||0) >= 3 ? ' ✓' : ''}\n`;
+    md += '\n';
+  }
+  return md;
+}
+$('btnErrors').onclick = () => { stopAll(); renderErrList(); $('dlgErrors').showModal(); };
+$('btnClearErrors').onclick = () => { if (confirm('Alle gesammelten Korrekturen löschen?')) { errorLog = []; saveErrors(); updateBadges(); renderErrList(); updateTrainProgress(); } };
+$('btnCopyErrors').onclick = async () => { try { await navigator.clipboard.writeText(errMarkdown()); $('btnCopyErrors').textContent = 'Kopiert ✓'; setTimeout(() => $('btnCopyErrors').textContent = 'Kopieren', 1500); } catch(e){ alert('Kopieren nicht möglich.'); } };
+$('btnDownloadErrors').onclick = () => download(`fehlerliste-${new Date().toISOString().slice(0,10)}.md`, errMarkdown(), 'text/markdown');
+
+/* ---------------- Vocab dialog ---------------- */
+function renderVocab(){
+  const box = $('vocabList'); box.innerHTML = '';
+  if (!vocab.length) { box.appendChild(el('div', 'empty', 'Noch keine Vokabeln gespeichert.')); return; }
+  [...vocab].reverse().forEach(v => {
+    const r = el('div', 'vocab');
+    const d = el('div', 'd'); d.appendChild(el('b', null, v.base || v.word));
+    if (v.en) d.appendChild(document.createTextNode(' · ' + v.en));
+    if (v.meaning) d.appendChild(el('small', null, v.meaning));
+    if (v.example) d.appendChild(el('small', null, '„' + v.example + '“'));
+    const x = el('button', null, '✕'); x.title = 'Löschen'; x.onclick = () => { vocab = vocab.filter(o => o !== v); saveVocab(); updateBadges(); renderVocab(); };
+    r.append(d, x); box.appendChild(r);
+  });
+}
+$('btnVocab').onclick = () => { stopAll(); renderVocab(); $('dlgVocab').showModal(); };
+$('btnDownloadVocab').onclick = () => download(`vokabeln-${new Date().toISOString().slice(0,10)}.md`,
+  `# Vokabeln – Sprechtrainer\n\n| Wort | Englisch | Bedeutung | Beispiel |\n|---|---|---|---|\n` + vocab.map(v => `| ${v.base||v.word} | ${v.en||''} | ${v.meaning||''} | ${v.example||''} |`).join('\n') + '\n', 'text/markdown');
+
+/* ---------------- Stats dialog ---------------- */
+function renderStats(){
+  const today = dayKey(Date.now());
+  const byDay = {}; for (const s of sessions) byDay[dayKey(s.start)] = (byDay[dayKey(s.start)] || 0) + s.userSec;
+  const weekAgo = Date.now() - 7*864e5;
+  const week = sessions.filter(s => s.start >= weekAgo);
+  const uSec = week.reduce((a, s) => a + s.userSec, 0), tSec = week.reduce((a, s) => a + s.tutorSec, 0);
+  const share = uSec + tSec ? Math.round(100 * uSec / (uSec + tSec)) : 0;
+  const longest = Math.max(0, ...sessions.map(s => s.longestWords));
+  const ym = new Date().toISOString().slice(0,7);
+  const tiles = [
+    [fmtMin(byDay[today] || 0), 'heute gesprochen'],
+    [calcStreak(sessions) + ' Tage', 'Serie'],
+    [fmtMin(uSec), 'diese Woche'],
+    [share + ' %', 'dein Redeanteil (Woche)'],
+    [longest + ' Wörter', 'längster Beitrag'],
+    [usage[ym] ? fmtUSD(usage[ym].cost) : '$0', 'API-Kosten im Monat (≈)']
+  ];
+  $('tiles').innerHTML = tiles.map(([v, k]) => `<div class="tile"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
+  const days = []; for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(d); }
+  const max = Math.max(60, ...days.map(d => byDay[dayKey(d)] || 0));
+  $('bars').innerHTML = days.map(d => { const v = byDay[dayKey(d)] || 0; return `<div class="bar${dayKey(d) === today ? ' today' : ''}" title="${Math.round(v/60)} min"><i style="height:${Math.max(2, Math.round(100*v/max))}%"></i><span>${d.getDate()}</span></div>`; }).join('');
+  const box = $('sessList'); box.innerHTML = '';
+  if (!sessions.length) box.appendChild(el('div', 'empty', 'Noch keine Sitzungen. Eine Sitzung wird gespeichert, sobald du gesprochen hast und auf „Neu“ oder „Sitzung beenden“ gehst.'));
+  for (const s of [...sessions].reverse().slice(0, 30)) {
+    const d = el('details', 'sess');
+    const sm = el('summary'); sm.innerHTML = `<b>${new Date(s.start).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' })}</b> · ${s.level} · ${({free:'Gespräch', exam:'Prüfung', training:'Training'})[s.mode] || s.mode} <span class="meta">· ${fmtMin(s.userSec)} gesprochen · ${s.turns} Beiträge${s.report ? ' · Bericht' : ''}</span>`;
+    d.appendChild(sm);
+    d.appendChild(el('p', null, s.report || 'Kein Bericht – beende eine Sitzung mit „Sitzung beenden“, um eine Einschätzung zu bekommen.'));
+    box.appendChild(d);
+  }
+}
+$('btnStats').onclick = () => { stopAll(); renderStats(); $('dlgStats').showModal(); };
+
+/* ---------------- PWA ---------------- */
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if ($('welcome')) welcome(); });
+async function doInstall(){ if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; if ($('welcome')) welcome(); }
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+window.addEventListener('beforeunload', () => { if (sess && sess.turns > 0) { sess.end = Date.now(); sessions.push(sess); saveSessions(); } });
+
+/* ---------------- Init ---------------- */
+if (hasTTS) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+updateBadges(); updateCost();
+setLevel(S.level, true);
+switchMode(mode, true);
+if (!S.apiKey) setTimeout(() => openSettings('Willkommen! Trag einmal deinen Claude API-Schlüssel ein, dann kann es losgehen.'), 300);
+</script>
+</body>
+</html>
