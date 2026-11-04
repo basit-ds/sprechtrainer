@@ -217,8 +217,46 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
 .badge.due{background:var(--tip-soft);color:var(--tip)}
 .lesson .pill{padding:4px 11px;font-size:13px}
 
+/* Writing */
+.wcard{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 22px}
+.wcard h2{font-family:var(--serif);font-weight:650;font-size:21px;margin:0 0 6px}
+.wcard .meta{color:var(--muted);font-size:13.5px;margin-bottom:10px;display:flex;gap:14px;flex-wrap:wrap}
+.wcard .sit{margin:0 0 10px;white-space:pre-wrap}
+.wcard ol{margin:0 0 10px;padding-left:20px}
+.wcard li{margin:3px 0}
+.wcard .tip{font-size:13.5px;color:var(--tip);background:var(--tip-soft);border-radius:10px;padding:8px 12px}
+.weditor textarea{min-height:220px;resize:vertical;line-height:1.6;font-size:16px}
+.weditor .bar{display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)}
+.weditor .bar .pill{margin-left:auto}
+.wc.ok{color:var(--good)} .wc.low{color:var(--bad)}
+.wtimer{font-variant-numeric:tabular-nums;font-weight:600}
+.wtimer.warn{color:var(--tip)} .wtimer.over{color:var(--bad)}
+.scores{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 14px}
+.score{background:var(--surface-2);border-radius:12px;padding:8px 10px;text-align:center}
+.score .g{font-family:var(--serif);font-size:26px;font-weight:650;line-height:1.1}
+.score .k{font-size:11.5px;color:var(--muted)}
+.score.A .g{color:var(--good)} .score.B .g{color:var(--accent)} .score.C .g{color:var(--tip)} .score.D .g{color:var(--bad)}
+.score.pass .g{color:var(--good);font-size:16px;padding-top:6px} .score.fail .g{color:var(--bad);font-size:16px;padding-top:6px} .score.mid .g{color:var(--tip);font-size:16px;padding-top:6px}
+.lp{list-style:none;padding:0;margin:0 0 12px}
+.lp li{padding:4px 0;display:flex;gap:8px;align-items:flex-start;font-size:14.5px}
+.lp .ok{color:var(--good);font-weight:700} .lp .no{color:var(--bad);font-weight:700}
+.lp small{color:var(--muted)}
+.diff{white-space:pre-wrap;line-height:1.75;background:var(--surface-2);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.diff del{background:var(--bad-soft);color:var(--bad);text-decoration:line-through;border-radius:3px;padding:0 2px}
+.diff ins{background:var(--good-soft);color:var(--good);text-decoration:none;font-weight:600;border-radius:3px;padding:0 2px}
+.wcard h4{margin:12px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.wcard details{margin-top:8px}
+.wcard summary{cursor:pointer;font-weight:500}
+.wcard .muster{white-space:pre-wrap;background:var(--surface-2);border-radius:12px;padding:12px 14px;margin-top:8px;line-height:1.6}
+.wcard .comment{margin:0 0 10px}
+.wrow{border-top:1px solid var(--line);padding:8px 0;font-size:14px}
+.wrow summary{cursor:pointer}
+.wrow .meta{color:var(--muted);font-size:13px}
+.wrow p{white-space:pre-wrap;margin:6px 0 0}
+
 @media (max-width:640px){
   .msg,.corr{max-width:92%}
+  .scores{grid-template-columns:repeat(2,1fr)}
   .lesson{flex-wrap:wrap}
   .grid2,.tiles{grid-template-columns:1fr 1fr}
   .mic{width:62px;height:62px}
@@ -240,7 +278,7 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
       <button data-level="A2">A2</button><button data-level="B1">B1</button><button data-level="B2">B2</button><button data-level="C1">C1</button>
     </div>
     <div class="seg" id="modeSeg" role="tablist">
-      <button data-mode="free">Gespräch</button><button data-mode="course">Kurs</button><button data-mode="exam">Prüfung</button><button data-mode="training">Training</button>
+      <button data-mode="free">Gespräch</button><button data-mode="course">Kurs</button><button data-mode="exam">Prüfung</button><button data-mode="training">Training</button><button data-mode="write">Schreiben</button>
     </div>
     <div class="icons">
       <button class="iconbtn" id="btnStats" title="Statistik">Statistik <span class="count ok" id="streakBadge">0</span></button>
@@ -269,6 +307,13 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
     <button class="pill" id="btnLessonCard" hidden>Karte</button>
     <button class="pill" id="btnLessonNext" hidden>Weiter ▸</button>
     <button class="pill primary" id="btnCourseOverview">Übersicht</button>
+    <button class="pill" data-action="new">Neu</button>
+  </div>
+  <div class="toolbar" id="toolbarWrite" hidden>
+    <select id="writeType" title="Textsorte"></select>
+    <button class="pill primary" id="btnNewWrite">Neue Aufgabe</button>
+    <button class="pill" id="btnOwnWrite" title="Einen eigenen Text korrigieren lassen">Eigener Text</button>
+    <button class="pill" id="btnWritings">Meine Texte <span class="count ok" id="writeCount">0</span></button>
     <button class="pill" data-action="new">Neu</button>
   </div>
   <div class="toolbar" id="toolbarTraining" hidden>
@@ -417,6 +462,18 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
   </div>
 </dialog>
 
+<!-- Writings -->
+<dialog id="dlgWritings">
+  <div class="dlg">
+    <h2>Meine Texte</h2>
+    <div id="writingList"></div>
+    <div class="dlg-actions">
+      <button class="pill" id="btnWritingsMd">Als Markdown</button>
+      <button class="pill primary" data-close="dlgWritings">Schließen</button>
+    </div>
+  </div>
+</dialog>
+
 <!-- Stats -->
 <dialog id="dlgStats">
   <div class="dlg">
@@ -505,6 +562,28 @@ function calcStreak(sessions, now){
   return n;
 }
 function words(t){ return (t.trim().match(/\S+/g) || []).length; }
+/** Word-level diff (LCS) → [{t:'eq'|'del'|'ins', s:string}] */
+function wordDiff(a, b){
+  const A = a.split(/(\s+)/).filter(x => x !== ''), B = b.split(/(\s+)/).filter(x => x !== '');
+  const n = A.length, m = B.length;
+  const L = Array.from({ length:n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = A[i] === B[j] ? L[i+1][j+1] + 1 : Math.max(L[i+1][j], L[i][j+1]);
+  const out = []; let i = 0, j = 0;
+  const push = (t, s) => { const last = out[out.length-1]; if (last && last.t === t) last.s += s; else out.push({ t, s }); };
+  while (i < n && j < m) {
+    if (A[i] === B[j]) { push('eq', A[i]); i++; j++; }
+    else if (L[i+1][j] >= L[i][j+1]) { push('del', A[i]); i++; }
+    else { push('ins', B[j]); j++; }
+  }
+  while (i < n) push('del', A[i++]);
+  while (j < m) push('ins', B[j++]);
+  // whitespace-only changes are noise
+  return out.filter(x => !(x.t !== 'eq' && !x.s.trim()));
+}
+function extractJSON(text){
+  const m = text.match(/\{[\s\S]*\}/); if (!m) throw new Error('Keine Auswertung erhalten');
+  return JSON.parse(m[0]);
+}
 function fmtMin(sec){ const m = Math.round(sec/60); return m + ' min'; }
 function fmtUSD(x){ return '$' + x.toFixed(x < 0.1 ? 3 : 2).replace('.', ','); }
 // ==/PURE==
@@ -572,6 +651,23 @@ const SCENARIOS = [
   { k:'reklamation', label:'Reklamation / Kundenservice', prompt:'ROLLENSPIEL: Du bist Mitarbeiterin im Kundenservice. Er beschwert sich über ein Produkt oder eine Rechnung. Bleib höflich, aber mach es ihm nicht zu leicht: frag nach Details, biete zuerst eine schwache Lösung an, bis er gut argumentiert.' }
 ];
 
+const WRITE_TYPES = {
+  A2:[
+    { k:'freund', label:'E-Mail an Freund/Freundin', hint:'persönlich (du): Einladung, Verabredung, Urlaubsgruß, kurz von sich erzählen' },
+    { k:'absage', label:'Absage / Entschuldigung', hint:'persönlich oder halbformell: nicht kommen können, Grund nennen, neuen Vorschlag machen' },
+    { k:'halbformell', label:'Halbformelle E-Mail (Sie)', hint:'an Sprachschule, Vermieter, Arzt, Kurs: Termin verschieben, Information erfragen, etwas mitteilen' },
+    { k:'nachricht', label:'Kurze Nachricht / Chat', hint:'SMS oder Chat an Nachbarn, Kollegen, Mitbewohner: Bitte, Information, Frage' } ],
+  B1:[
+    { k:'persoenlich', label:'Persönliche E-Mail / Brief', hint:'an Freunde oder Bekannte (du): von Erfahrungen berichten, Rat geben, einladen, reagieren auf eine E-Mail' },
+    { k:'halbformell', label:'Halbformelle E-Mail (Sie)', hint:'Anfrage oder Bitte um Information an Schule, Verein, Firma, Vermieter, Amt' },
+    { k:'beschwerde', label:'Beschwerde / Reklamation', hint:'über ein Produkt, eine Dienstleistung, einen Kurs, die Wohnung: Problem schildern, Forderung formulieren, höflich bleiben' },
+    { k:'bewerbung', label:'Kurze Bewerbung / Interesse', hint:'um einen Kursplatz, ein Praktikum, einen Nebenjob, eine Wohnung: vorstellen, Motivation, Fragen' },
+    { k:'absage', label:'Absage / Entschuldigung mit Begründung', hint:'Einladung ablehnen, Termin verschieben, sich entschuldigen, Alternative vorschlagen' } ],
+  B2:[ { k:'frei', label:'Stellungnahme / Leserbrief (Vorschau)', hint:'Meinung zu einem Thema begründen, Pro und Contra, Vorschlag; etwa 150–200 Wörter' } ],
+  C1:[ { k:'frei', label:'Erörterung / formeller Brief (Vorschau)', hint:'differenzierte Stellungnahme oder formelle Beschwerde/Anfrage; etwa 200–250 Wörter' } ]
+};
+const WRITE_SPEC = { A2:{ pts:3, words:'30–50', min:15 }, B1:{ pts:4, words:'80–120', min:30 }, B2:{ pts:4, words:'150–200', min:30 }, C1:{ pts:4, words:'200–250', min:45 } };
+
 /* ---------------- Settings & stores ---------------- */
 const LS = 'sprechtrainer.';
 const DEFAULTS = {
@@ -591,7 +687,9 @@ let vocab = loadJSON('vocab', []);         // [{word, base, meaning, en, example
 let sessions = loadJSON('sessions', []);   // [{start,end,mode,level,userSec,tutorSec,turns,longestWords,cost,report}]
 let usage = loadJSON('usage', {});         // {YYYY-MM:{in,out,cw,cr,cost}}
 let course = loadJSON('course', {});       // {lessonId:{status:'progress'|'done'|'repeat', score, lastAt, prio}}
+let writings = loadJSON('writings', []);   // [{at, level, type, task, text, result}]
 function saveCourse(){ saveJSON('course', course); }
+function saveWritings(){ saveJSON('writings', writings); }
 function saveErrors(){ saveJSON('errors', errorLog); }
 function saveVocab(){ saveJSON('vocab', vocab); }
 function saveSessions(){ saveJSON('sessions', sessions); }
@@ -603,7 +701,8 @@ const chat = $('chat'), scroller = $('scroller');
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const hasTTS = 'speechSynthesis' in window;
 
-let mode = ['free','course','exam','training'].includes(S.mode) ? S.mode : 'free';
+let mode = ['free','course','exam','training','write'].includes(S.mode) ? S.mode : 'free';
+let writeTask = null, writeDraft = '', writeBusy = false, wTimer = { end:0, int:null };
 let history = [];
 let state = 'idle';
 let currentAbort = null;
@@ -765,6 +864,8 @@ function welcome(){
       <li><b>Bewertung</b> – Einschätzung nach telc-Kriterien.</li></ol>
       <p>In der Prüfung sende ich nie automatisch: Beende deinen Beitrag mit Klick aufs Mikrofon oder <kbd>Leertaste</kbd>. Korrekturen bleiben eingeklappt, damit es fließt.</p>
       <div class="actions"><button class="pill primary" onclick="examCmd('${ex.parts[0].k}')">Mit ${ex.parts[0].label} beginnen</button></div>`;
+  } else if (mode === 'write') {
+    w.remove(); renderWrite(); return;
   } else if (mode === 'course') {
     const syl = SYL[L] || [];
     if (!syl.length) {
@@ -1037,7 +1138,7 @@ function lastUserBubble(){ const all = chat.querySelectorAll('.msg.user'); retur
 function lastUserText(){ const b = lastUserBubble(); return b ? b.textContent : null; }
 
 function newConversation(){
-  stopAll(); endSession(); history = []; currentDrill = null; lesson = null; diag = null; focusLesson = null; stopTimer(); updateLessonInfo(); welcome(); setState('idle'); updateCost();
+  stopAll(); endSession(); history = []; currentDrill = null; lesson = null; diag = null; focusLesson = null; writeTask = null; writeDraft = ''; stopTimer(); updateLessonInfo(); welcome(); setState('idle'); updateCost();
 }
 
 function startFree(){
@@ -1073,6 +1174,194 @@ function vocabWarmup(){
   newConversation();
   sendUser('[VOKABELN] ' + pick.join(', '), { hidden:true, label:'Vokabel-Warm-up · ' + pick.join(', ') });
 }
+
+/* ---------------- Writing ---------------- */
+async function apiJSON(system, user, maxTokens){
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{ 'content-type':'application/json', 'x-api-key':S.apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+    body: JSON.stringify({ model:S.model, max_tokens:maxTokens || 2500, system, messages:[{ role:'user', content:user }] })
+  });
+  const j = await res.json();
+  if (!res.ok) throw Object.assign(new Error(j.error && j.error.message || res.status), { status:res.status });
+  addUsage(S.model, { in:j.usage && j.usage.input_tokens || 0, out:j.usage && j.usage.output_tokens || 0, cw:j.usage && j.usage.cache_creation_input_tokens || 0, cr:j.usage && j.usage.cache_read_input_tokens || 0 });
+  return extractJSON((j.content || []).map(c => c.text || '').join(''));
+}
+function renderWriteTypes(){
+  const sel = $('writeType'); sel.innerHTML = '';
+  for (const t of WRITE_TYPES[S.level] || []) { const o = el('option', null, t.label); o.value = t.k; o.title = t.hint; sel.appendChild(o); }
+  $('writeCount').textContent = writings.length;
+}
+function renderWrite(){
+  chat.innerHTML = ''; stopWTimer();
+  const L = S.level, spec = WRITE_SPEC[L];
+  if (!writeTask) {
+    const w = el('div', 'welcome'); w.id = 'welcome';
+    const keyBanner = !S.apiKey ? '<div class="banner">Zuerst unter ⚙︎ den Claude API-Schlüssel eintragen.</div>' : '';
+    const last = writings.filter(x => x.level === L).slice(-3).reverse();
+    w.innerHTML = keyBanner + `<h1>Schreiben · ${L}</h1>
+      <p>${L === 'A2' || L === 'B1' ? `Aufgaben im Stil der telc-Prüfung ${L}: ${spec.pts} Leitpunkte, ${spec.words} Wörter, ${spec.min} Minuten.` : `Für ${L} gibt es vorerst eine Vorschau-Aufgabe und die Korrektur eigener Texte; die telc-Formate folgen.`} Du bekommst deinen Text mit markierten Korrekturen zurück, eine Bewertung nach telc-Kriterien, bessere Formulierungen und eine Musterlösung. Alle Fehler landen in der Fehlerliste und damit im Training.</p>
+      <ol><li>Oben eine Textsorte wählen und <b>Neue Aufgabe</b> drücken – oder <b>Eigener Text</b>, um etwas Eigenes korrigieren zu lassen.</li>
+      <li>Schreiben wie in der Prüfung: Anrede, alle Leitpunkte, Gruß. Der Timer ist freiwillig.</li>
+      <li><b>Abgeben</b> – die Auswertung dauert etwa zwanzig Sekunden.</li></ol>
+      ${last.length ? '<p style="margin-top:0">Zuletzt: ' + last.map(x => `${x.task.titel} (${x.result.bewertung.gesamt})`).join(' · ') + '</p>' : ''}
+      <div class="actions"><button class="pill primary" onclick="newWriteTask()">Neue Aufgabe</button><button class="pill" onclick="ownWriteTask()">Eigener Text</button></div>`;
+    chat.appendChild(w); return;
+  }
+  const T = writeTask;
+  const card = el('div', 'wcard');
+  card.innerHTML = `<h2>${T.titel}</h2>
+    <div class="meta"><span>${T.textsorte || ''}</span><span>Anrede: <b>${T.anrede || '–'}</b></span><span>${T.woerter ? T.woerter + ' Wörter' : ''}</span>${T.zeit_min ? `<span class="wtimer" id="wTimer">⏱ ${T.zeit_min}:00</span><button class="pill" id="wStart" style="padding:2px 10px;font-size:12.5px">Timer starten</button>` : ''}</div>
+    <p class="sit">${T.situation || ''}</p>
+    ${T.leitpunkte && T.leitpunkte.length ? '<ol>' + T.leitpunkte.map(p => `<li>${p}</li>`).join('') + '</ol>' : ''}
+    ${T.tipp ? `<div class="tip">${T.tipp}</div>` : ''}`;
+  chat.appendChild(card);
+  const ed = el('div', 'wcard weditor');
+  ed.innerHTML = `<textarea id="wText" placeholder="${T.own ? 'Deinen Text hier einfügen …' : 'Liebe/r … ,'}" spellcheck="false"></textarea>
+    <div class="bar"><span>Wörter: <b class="wc" id="wCount">0</b>${T.woerter ? ' / ' + T.woerter : ''}</span><button class="pill primary" id="wSubmit">Abgeben</button></div>`;
+  chat.appendChild(ed);
+  const ta = $('wText'); ta.value = writeDraft;
+  const upd = () => { writeDraft = ta.value; const n = words(ta.value); const wc = $('wCount'); wc.textContent = n; const min = parseInt(T.woerter) || 0; wc.className = 'wc ' + (min && n < min ? 'low' : n ? 'ok' : ''); };
+  ta.oninput = upd; upd();
+  $('wSubmit').onclick = submitWriting;
+  if ($('wStart')) $('wStart').onclick = () => { startWTimer(T.zeit_min * 60); $('wStart').remove(); };
+  if (T.result) renderWriteResult(T.result, T.text);
+  scrollDown();
+}
+function startWTimer(sec){
+  stopWTimer(); wTimer.end = Date.now() + sec * 1000;
+  const tick = () => {
+    const t = $('wTimer'); if (!t) { stopWTimer(); return; }
+    const left = Math.max(0, Math.round((wTimer.end - Date.now()) / 1000));
+    t.textContent = '⏱ ' + fmtClock(left); t.className = 'wtimer' + (left <= 0 ? ' over' : left <= 120 ? ' warn' : '');
+    if (left <= 0) { chime(2); stopWTimer(); } else if (left === 120) chime(1);
+  };
+  tick(); wTimer.int = setInterval(tick, 1000);
+}
+function stopWTimer(){ clearInterval(wTimer.int); wTimer.int = null; }
+async function newWriteTask(){
+  if (!S.apiKey) { openSettings('Bitte zuerst deinen Claude API-Schlüssel eintragen.'); return; }
+  if (writeBusy) return;
+  const L = S.level, spec = WRITE_SPEC[L];
+  const type = (WRITE_TYPES[L] || []).find(t => t.k === $('writeType').value) || (WRITE_TYPES[L] || [])[0];
+  writeBusy = true; writeTask = null; writeDraft = ''; renderWrite();
+  const c = chip('Erstelle Aufgabe …');
+  try {
+    const recent = writings.filter(x => x.level === L).slice(-6).map(x => x.task.titel).join('; ');
+    const task = await apiJSON(
+`Du erstellst Schreibaufgaben im Stil der Prüfung telc Deutsch ${L}. Antworte NUR mit einem JSON-Objekt, ohne Markdown:
+{"titel":"kurzer Titel","situation":"2–4 Sätze Ausgangslage auf Deutsch (bei Antwort-E-Mails: was der andere geschrieben hat)","textsorte":"z. B. persönliche E-Mail","anrede":"du oder Sie","leitpunkte":["…"],"woerter":"${spec.words}","zeit_min":${spec.min},"tipp":"ein Satz, worauf es bei dieser Textsorte ankommt"}
+Regeln: genau ${spec.pts} Leitpunkte, jeder ein kurzer Imperativ-/Nominalsatz wie in telc („Grund für die Absage“, „Vorschlag für einen neuen Termin“). Alltagsnahe, realistische Situation auf Niveau ${L}; die Situation nennt Adressat und Anlass klar. Keine Wiederholung dieser Aufgaben: ${recent || '–'}.`,
+`Neue Aufgabe. Niveau ${L}. Textsorte: ${type.label} – ${type.hint}. Über den Lernenden: ${S.about || 'keine Angaben'}.`, 700);
+    task.type = type.k; task.own = false;
+    writeTask = task; c.remove(); renderWrite();
+  } catch (e) { c.remove(); chip('Aufgabe konnte nicht erstellt werden: ' + (e.message || e), 'err'); renderWrite(); }
+  finally { writeBusy = false; }
+}
+function ownWriteTask(){
+  const L = S.level, spec = WRITE_SPEC[L];
+  const sit = prompt('Worum geht es in deinem Text? (optional – z. B. „E-Mail an meinen Vermieter wegen der Heizung“)') ;
+  if (sit === null) return;
+  writeTask = { titel:'Eigener Text', situation: sit.trim() || 'Freier Text ohne vorgegebene Aufgabe.', textsorte:'frei', anrede:'', leitpunkte:[], woerter:'', zeit_min:0, tipp:'', own:true, type:'own' };
+  writeDraft = ''; renderWrite(); $('wText').focus();
+}
+async function submitWriting(){
+  if (writeBusy || !writeTask) return;
+  const text = ($('wText').value || '').trim();
+  if (words(text) < 5) { chip('Bitte erst einen Text schreiben.', 'err'); return; }
+  if (!S.apiKey) { openSettings('Bitte zuerst deinen Claude API-Schlüssel eintragen.'); return; }
+  writeBusy = true; stopWTimer(); $('wSubmit').disabled = true; $('wSubmit').textContent = 'Wird ausgewertet …';
+  const L = S.level, T = writeTask;
+  try {
+    const result = await apiJSON(
+`Du bist erfahrene telc-Prüferin und Deutschlehrerin. Bewerte den Text eines Lernenden auf Niveau ${L}. Antworte NUR mit einem JSON-Objekt, ohne Markdown:
+{
+ "leitpunkte":[{"punkt":"…","erfuellt":true,"kommentar":"kurz"}],
+ "korrigiert":"der vollständige korrigierte Text – so nah wie möglich am Original, nur echte Fehler korrigieren (Grammatik, Rechtschreibung, Zeichensetzung, falsche Wörter, fehlende Anrede/Gruß); Zeilenumbrüche des Originals beibehalten",
+ "fehler":[{"falsch":"Stelle wörtlich","richtig":"korrigiert","regel":"sehr kurze Erklärung in einfachem Deutsch","typ":"Grammatik|Rechtschreibung|Wortwahl|Satzbau|Register"}],
+ "bewertung":{"aufgabe":"A|B|C|D","gestaltung":"A|B|C|D","richtigkeit":"A|B|C|D","gesamt":"bestanden|knapp|nicht bestanden","kommentar":"zwei bis drei ermutigende, konkrete Sätze"},
+ "besser":["Original → natürlichere Formulierung auf Niveau ${L}"],
+ "muster":"eine Musterlösung auf Niveau ${L}, die alle Leitpunkte erfüllt, mit passender Anrede und Gruß, Wortzahl im Rahmen der Aufgabe"
+}
+Kriterien (telc): Aufgabenbewältigung = alle Leitpunkte behandelt, Textsorte und Länge passend; Kommunikative Gestaltung = Aufbau, Anrede und Gruß, Verknüpfung der Sätze, Register (du/Sie) konsequent; Formale Richtigkeit = Grammatik, Rechtschreibung, Zeichensetzung – auf A2/B1 großzügig bei Kleinigkeiten, streng, wenn das Verständnis leidet. Höchstens 12 Fehler, die wichtigsten zuerst; höchstens 4 "besser"-Einträge. ${T.own ? 'Es gibt keine vorgegebenen Leitpunkte: "leitpunkte" bleibt leer, "aufgabe" bewertet nur Textsorte und Verständlichkeit.' : ''}`,
+`AUFGABE: ${JSON.stringify({ titel:T.titel, situation:T.situation, textsorte:T.textsorte, anrede:T.anrede, leitpunkte:T.leitpunkte, woerter:T.woerter })}
+
+TEXT DES LERNENDEN (${words(text)} Wörter):
+${text}`, 3000);
+    T.text = text; T.result = result;
+    writings.push({ at:new Date().toISOString(), level:L, type:T.type, task:{ titel:T.titel, situation:T.situation, leitpunkte:T.leitpunkte, anrede:T.anrede, woerter:T.woerter }, text, result });
+    saveWritings(); $('writeCount').textContent = writings.length;
+    // errors → Fehlerliste / Training
+    const items = (result.fehler || []).filter(f => f.falsch && f.richtig).map(f => ({ type:'F', from:f.falsch, to:f.richtig, why:(f.typ ? f.typ + ': ' : '') + (f.regel || ''), mastered:0 }));
+    const known = new Set(); for (const g of errorLog) for (const it of g.items) known.add((it.from + '→' + it.to).toLowerCase());
+    const fresh = items.filter(it => !known.has((it.from + '→' + it.to).toLowerCase()));
+    if (fresh.length) { errorLog.push({ said:'Text: ' + T.titel, items:fresh, mode:'write', level:L, at:new Date().toISOString() }); saveErrors(); updateBadges(); }
+    renderWriteResult(result, text);
+  } catch (e) {
+    chip('Auswertung fehlgeschlagen: ' + (e.message || e), 'err');
+    const b = $('wSubmit'); if (b) { b.disabled = false; b.textContent = 'Abgeben'; }
+  } finally { writeBusy = false; }
+}
+function grade(g){ return (g || '–').toString().trim().toUpperCase().slice(0, 1); }
+function renderWriteResult(r, text){
+  const old = $('wResult'); if (old) old.remove();
+  const b = $('wSubmit'); if (b) { b.disabled = true; b.textContent = 'Abgegeben'; }
+  const card = el('div', 'wcard'); card.id = 'wResult';
+  const bw = r.bewertung || {};
+  const gesamtCls = /nicht/i.test(bw.gesamt || '') ? 'fail' : /knapp/i.test(bw.gesamt || '') ? 'mid' : 'pass';
+  let html = `<h2>Auswertung</h2>
+    <div class="scores">
+      <div class="score ${grade(bw.aufgabe)}"><div class="g">${grade(bw.aufgabe)}</div><div class="k">Aufgabe</div></div>
+      <div class="score ${grade(bw.gestaltung)}"><div class="g">${grade(bw.gestaltung)}</div><div class="k">Gestaltung</div></div>
+      <div class="score ${grade(bw.richtigkeit)}"><div class="g">${grade(bw.richtigkeit)}</div><div class="k">Richtigkeit</div></div>
+      <div class="score ${gesamtCls}"><div class="g">${bw.gesamt || '–'}</div><div class="k">Gesamt</div></div>
+    </div>
+    <p class="comment">${bw.kommentar || ''}</p>`;
+  if (r.leitpunkte && r.leitpunkte.length) html += '<h4>Leitpunkte</h4><ul class="lp">' + r.leitpunkte.map(p => `<li><span class="${p.erfuellt ? 'ok' : 'no'}">${p.erfuellt ? '✓' : '✗'}</span><span>${p.punkt}${p.kommentar ? ' <small>– ' + p.kommentar + '</small>' : ''}</span></li>`).join('') + '</ul>';
+  html += '<h4>Dein Text mit Korrekturen</h4>';
+  card.innerHTML = html;
+  const d = el('div', 'diff');
+  for (const part of wordDiff(text, r.korrigiert || text)) d.appendChild(el(part.t === 'eq' ? 'span' : part.t, null, part.s));
+  card.appendChild(d);
+  if (r.fehler && r.fehler.length) {
+    card.appendChild(el('h4', null, `Fehler (${r.fehler.length})`));
+    for (const f of r.fehler) card.appendChild(corrRow({ type:'F', from:f.falsch, to:f.richtig, why:(f.typ ? f.typ + ': ' : '') + (f.regel || '') }));
+  } else card.appendChild(el('div', 'corr ok', '✓ Keine Fehler gefunden'));
+  if (r.besser && r.besser.length) { card.appendChild(el('h4', null, 'So klingt es natürlicher')); const ul = el('ul'); for (const x of r.besser) ul.appendChild(el('li', null, x)); card.appendChild(ul); }
+  if (r.muster) { const det = el('details'); det.appendChild(el('summary', null, 'Musterlösung anzeigen')); det.appendChild(el('div', 'muster', r.muster)); card.appendChild(det); }
+  const act = el('div', 'actions', ''); act.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:14px';
+  const rev = el('button', 'pill', 'Überarbeiten und nochmal abgeben'); rev.onclick = () => { writeTask.result = null; writeDraft = text; renderWrite(); };
+  const nxt = el('button', 'pill primary', 'Neue Aufgabe'); nxt.onclick = newWriteTask;
+  const hear = el('button', 'pill', '🔊 Musterlösung anhören'); hear.onclick = () => { stopSpeaking(); speakText(r.muster || '', false); };
+  act.append(rev, nxt); if (r.muster && hasTTS) act.append(hear);
+  card.appendChild(act);
+  chat.appendChild(card); scrollDown();
+}
+function openWritings(){
+  const box = $('writingList'); box.innerHTML = '';
+  if (!writings.length) box.appendChild(el('div', 'empty', 'Noch keine Texte geschrieben.'));
+  for (const w of [...writings].reverse()) {
+    const d = el('details', 'wrow'); const bw = w.result.bewertung || {};
+    const sm = el('summary'); sm.innerHTML = `<b>${w.task.titel}</b> · ${w.level} <span class="meta">· ${new Date(w.at).toLocaleDateString('de-DE')} · ${words(w.text)} Wörter · ${grade(bw.aufgabe)}/${grade(bw.gestaltung)}/${grade(bw.richtigkeit)} · ${bw.gesamt || ''}</span>`;
+    d.appendChild(sm); d.appendChild(el('p', null, w.text));
+    const b = el('button', 'pill', 'Auswertung öffnen'); b.style.marginTop = '8px';
+    b.onclick = () => { $('dlgWritings').close(); if (mode !== 'write') switchMode('write', true); writeTask = Object.assign({ own:false, type:w.type, textsorte:'', tipp:'', zeit_min:0 }, w.task, { text:w.text, result:w.result }); writeDraft = w.text; renderWrite(); };
+    d.appendChild(b); box.appendChild(d);
+  }
+  $('dlgWritings').showModal();
+}
+function writingsMarkdown(){
+  let md = '# Meine Texte – Sprechtrainer\n\n';
+  for (const w of writings) {
+    const bw = w.result.bewertung || {};
+    md += `## ${w.task.titel} (${w.level}, ${new Date(w.at).toLocaleDateString('de-DE')})\n\n**Aufgabe:** ${w.task.situation}\n${(w.task.leitpunkte || []).map(p => '- ' + p).join('\n')}\n\n**Mein Text:**\n\n${w.text}\n\n**Korrigiert:**\n\n${w.result.korrigiert || ''}\n\n**Bewertung:** Aufgabe ${grade(bw.aufgabe)}, Gestaltung ${grade(bw.gestaltung)}, Richtigkeit ${grade(bw.richtigkeit)} – ${bw.gesamt || ''}. ${bw.kommentar || ''}\n\n**Fehler:**\n${(w.result.fehler || []).map(f => `- ~~${f.falsch}~~ → **${f.richtig}** – ${f.regel || ''}`).join('\n')}\n\n**Musterlösung:**\n\n${w.result.muster || ''}\n\n---\n\n`;
+  }
+  return md;
+}
+$('btnNewWrite').onclick = newWriteTask;
+$('btnOwnWrite').onclick = ownWriteTask;
+$('btnWritings').onclick = openWritings;
+$('btnWritingsMd').onclick = () => download(`meine-texte-${new Date().toISOString().slice(0,10)}.md`, writingsMarkdown(), 'text/markdown');
 
 /* ---------------- Course ---------------- */
 function lessonById(id){ for (const k in SYL) { const f = (SYL[k] || []).find(l => l.id === id); if (f) return f; } return null; }
@@ -1482,8 +1771,10 @@ function switchMode(m, force){
   if (!force && history.length && !confirm('Modus wechseln und neues Gespräch beginnen?')) return;
   mode = m; S.mode = m; saveSettings();
   document.querySelectorAll('#modeSeg button').forEach(x => x.classList.toggle('active', x.dataset.mode === m));
-  $('toolbarFree').hidden = m !== 'free'; $('toolbarExam').hidden = m !== 'exam'; $('toolbarTraining').hidden = m !== 'training'; $('toolbarCourse').hidden = m !== 'course';
+  $('toolbarFree').hidden = m !== 'free'; $('toolbarExam').hidden = m !== 'exam'; $('toolbarTraining').hidden = m !== 'training'; $('toolbarCourse').hidden = m !== 'course'; $('toolbarWrite').hidden = m !== 'write';
+  document.querySelector('footer').hidden = m === 'write';
   if (m === 'training') updateTrainProgress();
+  if (m === 'write') renderWriteTypes();
   newConversation();
 }
 function setLevel(L, silent){
@@ -1492,7 +1783,7 @@ function setLevel(L, silent){
   const changed = L !== S.level;
   S.level = L; saveSettings();
   document.querySelectorAll('#levelSeg button').forEach(x => x.classList.toggle('active', x.dataset.level === L));
-  renderExamParts();
+  renderExamParts(); renderWriteTypes();
   if (changed || !silent) newConversation(); else updateLessonInfo();
 }
 document.querySelectorAll('#modeSeg button').forEach(b => b.onclick = () => switchMode(b.dataset.mode));
@@ -1543,7 +1834,7 @@ $('btnTestVoice').onclick = () => {
 $('btnBackup').onclick = () => {
   const s = Object.assign({}, S); delete s.apiKey;
   download(`sprechtrainer-backup-${new Date().toISOString().slice(0,10)}.json`,
-    JSON.stringify({ app:'sprechtrainer', version:2, settings:s, errors:errorLog, vocab, sessions, usage, course }, null, 1), 'application/json');
+    JSON.stringify({ app:'sprechtrainer', version:2, settings:s, errors:errorLog, vocab, sessions, usage, course, writings }, null, 1), 'application/json');
 };
 $('btnRestore').onclick = () => $('restoreFile').click();
 $('restoreFile').onchange = async e => {
@@ -1558,7 +1849,8 @@ $('restoreFile').onchange = async e => {
     const ss = new Set(sessions.map(s => s.start)); for (const s of d.sessions || []) if (!ss.has(s.start)) sessions.push(s);
     for (const [ym, u] of Object.entries(d.usage || {})) if (!usage[ym]) usage[ym] = u;
     for (const [id, c] of Object.entries(d.course || {})) if (!course[id] || (c.lastAt || 0) > (course[id].lastAt || 0)) course[id] = c;
-    saveErrors(); saveVocab(); saveSessions(); saveUsage(); saveCourse(); updateBadges();
+    const ws = new Set(writings.map(w => w.at)); for (const w of d.writings || []) if (!ws.has(w.at)) writings.push(w);
+    saveErrors(); saveVocab(); saveSessions(); saveUsage(); saveCourse(); saveWritings(); updateBadges();
     $('dlgSettings').close(); setLevel(S.level, true); switchMode(S.mode || 'free', true);
     chip('Backup geladen.', 'good');
   } catch (err) { alert('Backup konnte nicht geladen werden: ' + err.message); }
@@ -1640,7 +1932,7 @@ function renderStats(){
   if (!sessions.length) box.appendChild(el('div', 'empty', 'Noch keine Sitzungen. Eine Sitzung wird gespeichert, sobald du gesprochen hast und auf „Neu“ oder „Sitzung beenden“ gehst.'));
   for (const s of [...sessions].reverse().slice(0, 30)) {
     const d = el('details', 'sess');
-    const sm = el('summary'); sm.innerHTML = `<b>${new Date(s.start).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' })}</b> · ${s.level} · ${({free:'Gespräch', exam:'Prüfung', training:'Training', course:'Kurs'})[s.mode] || s.mode} <span class="meta">· ${fmtMin(s.userSec)} gesprochen · ${s.turns} Beiträge${s.report ? ' · Bericht' : ''}</span>`;
+    const sm = el('summary'); sm.innerHTML = `<b>${new Date(s.start).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' })}</b> · ${s.level} · ${({free:'Gespräch', exam:'Prüfung', training:'Training', course:'Kurs', write:'Schreiben'})[s.mode] || s.mode} <span class="meta">· ${fmtMin(s.userSec)} gesprochen · ${s.turns} Beiträge${s.report ? ' · Bericht' : ''}</span>`;
     d.appendChild(sm);
     d.appendChild(el('p', null, s.report || 'Kein Bericht – beende eine Sitzung mit „Sitzung beenden“, um eine Einschätzung zu bekommen.'));
     box.appendChild(d);
