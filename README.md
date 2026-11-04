@@ -6,6 +6,7 @@ Läuft komplett im Browser (Edge oder Chrome, Desktop und Android). Die KI dahin
 
 ## Funktionen
 
+- **Kurs** – Grammatik zum Sprechen: 16 B1-Lektionen in vier Phasen (Erklärung, gelenktes Sprechen, freies Sprechen, Check), Diagnose-Gespräch, Wiederholungs-Checks, Lernkarten als Markdown. Weitere Niveaus folgen in `syllabus.js`.
 - **Niveaus A2 · B1 · B2 · C1** – Sprache, Tempo, Korrekturtiefe und Prüfungsformat passen sich an.
 - **Gespräch** mit Themenwahl und Rollenspielen (Bewerbungsgespräch, Bürgeramt, Arzttermin, Wohnungsbesichtigung …).
 - **Prüfung** – Simulation der mündlichen telc-Prüfung des gewählten Niveaus, mit Timer für Präsentation und Vorbereitung sowie Bewertung nach telc-Kriterien.

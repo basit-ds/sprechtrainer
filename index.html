@@ -192,8 +192,34 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
 .vocab .d small{color:var(--muted);display:block}
 .vocab button{border:0;background:none;color:var(--muted);font-size:16px;padding:0 4px}
 
+/* Course */
+.msg.tutor.card{max-width:92%;background:var(--surface);border-color:var(--accent);white-space:normal}
+.card .lbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:2px}
+.card h3{font-family:var(--serif);font-size:20px;font-weight:650;margin:0 0 8px}
+.card .goal{color:var(--muted);font-size:14px;margin-bottom:10px}
+.card ul{margin:0 0 10px;padding-left:18px;font-size:14.5px}
+.card li{margin:3px 0}
+.card .ex{font-style:italic;margin:2px 0}
+.card .trap{background:var(--tip-soft);color:var(--tip);border-radius:10px;padding:8px 12px;font-size:14px;margin-top:8px}
+.card .trap b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.phase{align-self:center;font-size:12.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:4px 14px;border-radius:99px}
+.pbar{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+.lesson{display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding:9px 0;font-size:14px}
+.lesson .n{width:22px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+.lesson .t{flex:1;min-width:0}
+.lesson .t small{display:block;color:var(--muted);font-size:12.5px}
+.badge{font-size:11px;font-weight:600;border-radius:99px;padding:2px 8px;white-space:nowrap;background:var(--surface-2);color:var(--muted)}
+.badge.done{background:var(--good-soft);color:var(--good)}
+.badge.repeat{background:var(--bad-soft);color:var(--bad)}
+.badge.prio{background:var(--tip-soft);color:var(--tip)}
+.badge.progress{background:var(--accent-soft);color:var(--accent)}
+.badge.due{background:var(--tip-soft);color:var(--tip)}
+.lesson .pill{padding:4px 11px;font-size:13px}
+
 @media (max-width:640px){
   .msg,.corr{max-width:92%}
+  .lesson{flex-wrap:wrap}
   .grid2,.tiles{grid-template-columns:1fr 1fr}
   .mic{width:62px;height:62px}
   .welcome{padding:20px}
@@ -214,7 +240,7 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
       <button data-level="A2">A2</button><button data-level="B1">B1</button><button data-level="B2">B2</button><button data-level="C1">C1</button>
     </div>
     <div class="seg" id="modeSeg" role="tablist">
-      <button data-mode="free">Gespräch</button><button data-mode="exam">Prüfung</button><button data-mode="training">Training</button>
+      <button data-mode="free">Gespräch</button><button data-mode="course">Kurs</button><button data-mode="exam">Prüfung</button><button data-mode="training">Training</button>
     </div>
     <div class="icons">
       <button class="iconbtn" id="btnStats" title="Statistik">Statistik <span class="count ok" id="streakBadge">0</span></button>
@@ -235,6 +261,14 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
     <span class="spacer"></span>
     <span class="timer" id="timer" hidden><span class="t" id="timerText">0:00</span><span id="timerKind"></span><button id="timerStop">✕</button></span>
     <span class="timer" id="prepTimer"><span>Vorbereitung</span><select id="prepMin"><option value="1">1 min</option><option value="2">2 min</option><option value="5">5 min</option><option value="10">10 min</option><option value="20">20 min</option></select><button id="prepStart">Start</button></span>
+    <button class="pill" data-action="new">Neu</button>
+  </div>
+  <div class="toolbar" id="toolbarCourse" hidden>
+    <span class="progress" id="lessonInfo"></span>
+    <span class="spacer"></span>
+    <button class="pill" id="btnLessonCard" hidden>Karte</button>
+    <button class="pill" id="btnLessonNext" hidden>Weiter ▸</button>
+    <button class="pill primary" id="btnCourseOverview">Übersicht</button>
     <button class="pill" data-action="new">Neu</button>
   </div>
   <div class="toolbar" id="toolbarTraining" hidden>
@@ -366,6 +400,23 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
   </div>
 </dialog>
 
+<!-- Course overview -->
+<dialog id="dlgCourse">
+  <div class="dlg">
+    <h2 id="courseTitle">Kurs</h2>
+    <div class="pbar"><i id="coursePbar"></i></div>
+    <div class="row" id="courseActions">
+      <button class="pill" id="btnDiagnose">Diagnose-Gespräch</button>
+      <button class="pill" id="btnCardsMd">Alle Karten als Markdown</button>
+    </div>
+    <p class="empty" style="margin:0" id="courseHint"></p>
+    <div id="lessonList"></div>
+    <div class="dlg-actions">
+      <button class="pill primary" data-close="dlgCourse">Schließen</button>
+    </div>
+  </div>
+</dialog>
+
 <!-- Stats -->
 <dialog id="dlgStats">
   <div class="dlg">
@@ -381,6 +432,7 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
   </div>
 </dialog>
 
+<script src="syllabus.js"></script>
 <script>
 // ==PURE==
 const MARK = '§§';
@@ -408,7 +460,7 @@ function splitOutput(full){
 }
 function stripQuotes(s){ return s.trim().replace(/^[<„“"'»«‚]+|[>“”"'»«‘]+$/g,'').trim(); }
 function parseCorrections(raw){
-  const res = { ok:false, items:[], target:null };
+  const res = { ok:false, items:[], target:null, prio:null };
   if (raw == null) return res;
   raw.replace(/^\s*KORREKTUR\s*§*/i,'').split(/\r?\n/).forEach(line => {
     const l = line.trim().replace(/^[-*•]\s*/,'');
@@ -416,6 +468,8 @@ function parseCorrections(raw){
     if (/^OK\b\.?$/i.test(l)) { res.ok = true; return; }
     const z = l.match(/^ZIEL\s*:\s*(OK|JA|NEIN|NO)\b/i);
     if (z) { res.target = /OK|JA/i.test(z[1]) ? 'OK' : 'NEIN'; return; }
+    const pr = l.match(/^PRIO\s*:\s*(.+)$/i);
+    if (pr) { res.prio = pr[1].split(/[,;\s]+/).map(s => s.trim().toLowerCase()).filter(Boolean); return; }
     const m = l.match(/^([FW])\s*:\s*(.+?)\s*(?:=>|→|->)\s*(.+?)(?:\s*\|\|\s*(.*))?$/i);
     if (m) res.items.push({ type:m[1].toUpperCase(), from:stripQuotes(m[2]), to:stripQuotes(m[3]), why:(m[4]||'').trim() });
   });
@@ -536,6 +590,8 @@ let errorLog = loadJSON('errors', []);     // [{said, items:[{type,from,to,why,m
 let vocab = loadJSON('vocab', []);         // [{word, base, meaning, en, example, at}]
 let sessions = loadJSON('sessions', []);   // [{start,end,mode,level,userSec,tutorSec,turns,longestWords,cost,report}]
 let usage = loadJSON('usage', {});         // {YYYY-MM:{in,out,cw,cr,cost}}
+let course = loadJSON('course', {});       // {lessonId:{status:'progress'|'done'|'repeat', score, lastAt, prio}}
+function saveCourse(){ saveJSON('course', course); }
 function saveErrors(){ saveJSON('errors', errorLog); }
 function saveVocab(){ saveJSON('vocab', vocab); }
 function saveSessions(){ saveJSON('sessions', sessions); }
@@ -547,12 +603,17 @@ const chat = $('chat'), scroller = $('scroller');
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const hasTTS = 'speechSynthesis' in window;
 
-let mode = ['free','exam','training'].includes(S.mode) ? S.mode : 'free';
+let mode = ['free','course','exam','training'].includes(S.mode) ? S.mode : 'free';
 let history = [];
 let state = 'idle';
 let currentAbort = null;
 let sess = null;             // current session stats
 let currentDrill = null;     // training: item being drilled
+let lesson = null;           // course: {spec, phase, turns, hits, review}
+let diag = null;             // course: diagnose conversation {turns}
+let focusLesson = null;      // free mode: a finished lesson the tutor keeps an eye on
+const PHASES = { 2:{ name:'Gelenktes Sprechen', turns:7 }, 3:{ name:'Freies Sprechen', turns:6 }, 4:{ name:'Check', turns:5 } };
+const SYL = window.SYLLABUS || {};
 let afterSpeech = null;      // callback instead of auto-listen after the tutor finished speaking
 let installPrompt = null;
 
@@ -573,7 +634,31 @@ Wenn alles korrekt ist, oder wenn die letzte Nachricht nur ein Befehl in eckigen
   const free = `MODUS: Gespräch.
 ${scen.prompt ? scen.prompt + ' Bleib in der Rolle; passe Wortschatz und Tempo an Niveau ' + L + ' an.' : `- ${topic ? 'Gewünschtes Thema: ' + topic + '.' : 'Wähle selbst abwechslungsreiche Themen, die zum Niveau passen.'}
 - Knüpfe an die Interessen des Lernenden an, aber nicht nur an seine Arbeit.
-- Reagiere echt auf den Inhalt, bring eigene plausible Meinungen und Erfahrungen ein und widersprich ab und zu höflich, damit er begründen muss.`}`;
+- Reagiere echt auf den Inhalt, bring eigene plausible Meinungen und Erfahrungen ein und widersprich ab und zu höflich, damit er begründen muss.`}${focusLesson ? `
+- FOKUS dieser Sitzung (aus dem Kurs): „${focusLesson.title}“. Schaffe unauffällig Gelegenheiten, diese Struktur zu benutzen, und korrigiere Fehler darin immer.` : ''}`;
+
+  const courseBlock = (() => {
+    if (lesson) {
+      const c = lesson.spec.card;
+      return `MODUS: Kurs-Lektion „${lesson.spec.title}“ (Niveau ${L}). Ziel: ${lesson.spec.goal}
+Form: ${c.form.join(' | ')}
+Beispiele: ${c.examples.join(' ')}
+Typischer Fehler: ${c.trap}
+Themen für Fragen: ${lesson.spec.topics}
+Die App steuert die Phasen mit Befehlen:
+[PHASE 1] Erkläre die Struktur in höchstens sechs kurzen, einfachen Sätzen mit zwei Beispielen (keine Fachbegriffe, keine Liste). Stell danach sofort die erste Übungsfrage.
+Gelenktes Sprechen (nach Phase 1): Stell eine Frage nach der anderen, die den Lernenden zwingt, genau diese Struktur zu benutzen. Reagiere auf seine Antwort ganz kurz (ein Satz; bei Fehlern die richtige Form nennen), dann die nächste Frage. Variiere Personen, Zeiten und Themen.
+[PHASE 3] Freies Sprechen: Starte ${lesson.spec.free}. Sprich wie ein normaler Gesprächspartner, zwei bis drei Sätze, offene Fragen; die Struktur soll natürlich vorkommen.
+[PHASE 4] Check: Sag, dass jetzt fünf kurze Aufgaben kommen. Stell dann pro Nachricht genau EINE Aufgabe, bei der er einen Satz mit der Struktur bilden muss (zum Beispiel „Sag es im Perfekt: …“, „Verbinde die Sätze mit weil: …“, „Antworte mit einem ganzen Satz: …“). Reagiere auf jede Antwort mit höchstens einem Satz und stell die nächste Aufgabe. Keine Erklärungen im Check.
+[ABSCHLUSS] <Ergebnis>: Ein bis drei Sätze zum Ergebnis und ein konkreter Tipp. Keine Frage.
+Wenn eine Nachricht mit „[Hinweis der App: …]“ endet, befolge den Hinweis.
+Im gelenkten Sprechen und im Check: im Korrekturteil nach jeder Antwort zusätzlich die Zeile ZIEL: OK oder ZIEL: NEIN (hat er die Zielstruktur korrekt verwendet?). Im freien Sprechen keine ZIEL-Zeile.`;
+    }
+    const list = (SYL[L] || []).map(l => `${l.id} = ${l.title}`).join('; ');
+    return `MODUS: Diagnose-Gespräch für den Kurs ${L}. Führe ein lockeres Gespräch von etwa acht Fragen, das nacheinander möglichst viele dieser Strukturen provoziert, ohne sie zu nennen: ${list}.
+Reagiere kurz und natürlich, stell pro Nachricht eine Frage. Korrekturen wie üblich im Korrekturteil.
+Beim Befehl [DIAGNOSE ENDE]: gib im gesprochenen Teil eine ehrliche Einschätzung in höchstens sechs Sätzen (was schon gut sitzt, was wackelt) und schreib im Korrekturteil eine Zeile PRIO: gefolgt von den drei Lektions-IDs, die er zuerst machen sollte, genau wie oben geschrieben, durch Komma getrennt.`;
+  })();
 
   const ex = EXAM[L];
   const exam = `MODUS: Simulation der mündlichen Prüfung ${ex.name}. Du spielst die Prüferin und zugleich den Mitprüfling (Partner). Bleib in der Rolle, sprich wie in einer echten Prüfung, kurz und klar.
@@ -587,7 +672,7 @@ Außerhalb dieser Befehle reagierst du einfach prüfungsgerecht auf das, was er 
 - Auf seine Antwort: Sag in ein bis zwei Sätzen, ob er die Zielstruktur getroffen hat; wenn nicht, nenn die richtige Form. Stell danach KEINE neue Frage, das macht die App.
 - Im Korrekturteil nach seiner Antwort zusätzlich eine Zeile: ZIEL: OK (Zielstruktur korrekt verwendet) oder ZIEL: NEIN.`;
 
-  const modeBlock = mode === 'exam' ? exam : mode === 'training' ? training : free;
+  const modeBlock = mode === 'exam' ? exam : mode === 'training' ? training : mode === 'course' ? courseBlock : free;
 
   return `Du bist eine erfahrene, freundliche Deutschlehrerin und Sprechpartnerin (Muttersprachlerin, Hochdeutsch). Ihr führt ein GESPROCHENES Gespräch: Deine Antwort wird per Sprachausgabe vorgelesen, die Beiträge des Lernenden kommen per Spracherkennung.
 
@@ -680,6 +765,24 @@ function welcome(){
       <li><b>Bewertung</b> – Einschätzung nach telc-Kriterien.</li></ol>
       <p>In der Prüfung sende ich nie automatisch: Beende deinen Beitrag mit Klick aufs Mikrofon oder <kbd>Leertaste</kbd>. Korrekturen bleiben eingeklappt, damit es fließt.</p>
       <div class="actions"><button class="pill primary" onclick="examCmd('${ex.parts[0].k}')">Mit ${ex.parts[0].label} beginnen</button></div>`;
+  } else if (mode === 'course') {
+    const syl = SYL[L] || [];
+    if (!syl.length) {
+      const have = Object.keys(SYL).filter(k => (SYL[k] || []).length);
+      w.innerHTML = banner + `<h1>Kurs · ${L}</h1>
+        <p>Für ${L} gibt es den Kurs noch nicht. Bisher verfügbar: ${have.join(', ') || '–'}.</p>
+        <div class="actions">${have.map(k => `<button class="pill primary" onclick="setLevel('${k}')">Zum Kurs ${k}</button>`).join('')}</div>`;
+    } else {
+      const done = syl.filter(l => (course[l.id] || {}).status === 'done').length;
+      const next = nextLesson();
+      w.innerHTML = banner + `<h1>Kurs · ${L} Grammatik zum Sprechen</h1>
+        <p>${syl.length} Lektionen, jede etwa fünfzehn Minuten: kurze Erklärung, gelenktes Sprechen, freies Sprechen, Check mit fünf Aufgaben. Vier von fünf richtig, und die Lektion sitzt.</p>
+        <div class="pbar" style="margin-bottom:14px"><i style="width:${Math.round(100*done/syl.length)}%"></i></div>
+        <ul><li><b>${done}</b> von ${syl.length} Lektionen sitzen.</li>
+        ${next ? `<li>Als Nächstes: <b>${next.title}</b>${(course[next.id]||{}).prio ? ' (Empfehlung aus der Diagnose)' : ''}</li>` : '<li>Alle Lektionen sitzen – Wiederholungen findest du in der Übersicht.</li>'}
+        ${!Object.values(course).some(c => c.prio) && !done ? '<li>Tipp: Starte mit dem <b>Diagnose-Gespräch</b> (zehn Minuten) – danach weißt du, welche Lektionen du zuerst brauchst.</li>' : ''}</ul>
+        <div class="actions">${next ? `<button class="pill primary" onclick="startLesson('${next.id}')">${next.title} starten</button>` : ''}<button class="pill" onclick="openCourse()">Übersicht</button>${!done ? '<button class="pill" onclick="startDiagnose()">Diagnose-Gespräch</button>' : ''}</div>`;
+    }
   } else {
     const pool = drillPool();
     const open = pool.filter(i => i.mastered < 3).length;
@@ -766,6 +869,10 @@ chat.addEventListener('click', e => {
 function renderCorrections(after, said, parsed){
   if (S.strict === 'off' && !parsed.target) return;
   if (parsed.target) {
+    if (mode === 'course' && lesson) {
+      if (lesson.phase === 2) after.after(el('div', 'chip ' + (parsed.target === 'OK' ? 'good' : 'err'), parsed.target === 'OK' ? '✓ Struktur getroffen' : '✗ Struktur noch nicht getroffen'));
+      else if (lesson.phase === 4) after.after(el('div', 'chip ' + (parsed.target === 'OK' ? 'good' : 'err'), (parsed.target === 'OK' ? '✓ Richtig' : '✗ Leider nicht') + ` (Aufgabe ${lesson.turns + 1}/5)`));
+    }
     if (currentDrill) {
       if (parsed.target === 'OK') { currentDrill.mastered = (currentDrill.mastered||0) + 1; }
       saveErrors(); updateTrainProgress();
@@ -792,7 +899,7 @@ function renderCorrections(after, said, parsed){
   // keep the list free of exact repeats (same correction already collected)
   const known = new Set(); for (const g of errorLog) for (const it of g.items) known.add((it.from + '→' + it.to).toLowerCase());
   const fresh = items.filter(it => !known.has((it.from + '→' + it.to).toLowerCase()));
-  if (fresh.length) { errorLog.push({ said, items:fresh, mode, level:S.level, at:new Date().toISOString() }); saveErrors(); updateBadges(); }
+  if (fresh.length) { errorLog.push({ said, items:fresh, mode, level:S.level, lesson: lesson ? lesson.spec.id : undefined, at:new Date().toISOString() }); saveErrors(); updateBadges(); }
 }
 function corrRow(it, showMastery){
   const r = el('div', 'crow ' + (it.type === 'W' ? 'w' : 'f'));
@@ -811,9 +918,17 @@ function sendUser(text, opts = {}){
   stopAll();
   let bubble = null;
   if (opts.label) chip(opts.label);
-  if (!opts.hidden) { bubble = addUserBubble(text); noteUserTurn(text, opts.spokenSec); if (timer.armed && timer.skip > 0) timer.skip--; }
+  let suffix = '';
+  if (!opts.hidden) {
+    bubble = addUserBubble(text); noteUserTurn(text, opts.spokenSec);
+    if (timer.armed && timer.skip > 0) timer.skip--;
+    // course: tell the tutor when an answer is the last one of a phase, so it doesn't ask a new question
+    if (mode === 'course' && lesson && PHASES[lesson.phase] && lesson.turns + 1 >= PHASES[lesson.phase].turns)
+      suffix = lesson.phase === 4 ? '\n[Hinweis der App: Das war die letzte Check-Aufgabe. Reagiere nur mit einem Satz, stell KEINE neue Aufgabe.]' : '\n[Hinweis der App: Das war die letzte Antwort dieser Phase. Reagiere nur kurz darauf, stell KEINE neue Frage.]';
+    if (mode === 'course' && diag && diag.turns + 1 >= 8) suffix = '\n[Hinweis der App: Das war die letzte Antwort des Diagnose-Gesprächs. Reagiere nur kurz, stell KEINE neue Frage.]';
+  }
   else ensureSession();
-  history.push({ role:'user', content:text });
+  history.push({ role:'user', content:text + suffix });
   callClaude(bubble, opts.hidden ? null : text, opts);
 }
 
@@ -897,6 +1012,7 @@ async function callClaude(userBubble, said, opts = {}){
   if (userBubble && corr !== null) renderCorrections(userBubble, said, parsed);
   else if (parsed.target && currentDrill) renderCorrections(bubble, said, parsed);
   if (mode === 'training' && currentDrill && userBubble && !parsed.target) currentDrill = null; // model forgot the ZIEL line → move on
+  if (mode === 'course') courseAfterTurn(userBubble, parsed);
   scrollDown();
   streamDone = true;
   if (!speakingNow && !speechQueue.length) onSpeechDone(gen);
@@ -921,13 +1037,17 @@ function lastUserBubble(){ const all = chat.querySelectorAll('.msg.user'); retur
 function lastUserText(){ const b = lastUserBubble(); return b ? b.textContent : null; }
 
 function newConversation(){
-  stopAll(); endSession(); history = []; currentDrill = null; stopTimer(); welcome(); setState('idle'); updateCost();
+  stopAll(); endSession(); history = []; currentDrill = null; lesson = null; diag = null; focusLesson = null; stopTimer(); updateLessonInfo(); welcome(); setState('idle'); updateCost();
 }
 
 function startFree(){
   newConversation();
   const topic = $('topic').value.trim();
   const scen = SCENARIOS.find(s => s.k === $('scenario').value) || SCENARIOS[0];
+  // every other free conversation gets a quiet focus on a finished course lesson (spaced review)
+  const done = (SYL[S.level] || []).filter(l => (course[l.id] || {}).status === 'done');
+  focusLesson = (!scen.k && done.length && Math.random() < 0.5) ? done[Math.floor(Math.random() * done.length)] : null;
+  if (focusLesson) chip('Fokus heute: ' + focusLesson.title);
   const label = scen.k ? 'Rollenspiel · ' + scen.label : topic ? 'Gespräch · ' + topic : 'Gespräch gestartet';
   sendUser(`[START] Begrüße mich kurz und beginne ${scen.k ? 'das Rollenspiel' : 'das Gespräch'} ${topic ? 'zum Thema: ' + topic : scen.k ? '' : 'mit einem Thema deiner Wahl'}.`, { hidden:true, label });
 }
@@ -953,6 +1073,133 @@ function vocabWarmup(){
   newConversation();
   sendUser('[VOKABELN] ' + pick.join(', '), { hidden:true, label:'Vokabel-Warm-up · ' + pick.join(', ') });
 }
+
+/* ---------------- Course ---------------- */
+function lessonById(id){ for (const k in SYL) { const f = (SYL[k] || []).find(l => l.id === id); if (f) return f; } return null; }
+function nextLesson(){
+  const syl = SYL[S.level] || [];
+  const st = id => (course[id] || {}).status;
+  return syl.find(l => (course[l.id] || {}).prio && st(l.id) !== 'done')
+      || syl.find(l => st(l.id) === 'repeat' || st(l.id) === 'progress')
+      || syl.find(l => !st(l.id)) || null;
+}
+function isDue(id){ const c = course[id]; return !!(c && c.status === 'done' && Date.now() - (c.lastAt || 0) > 7 * 864e5); }
+function showCard(spec){
+  removeWelcome();
+  const b = el('div', 'msg tutor card');
+  b.appendChild(el('span', 'lbl', 'Lernkarte'));
+  b.appendChild(el('h3', null, spec.title));
+  b.appendChild(el('div', 'goal', spec.goal));
+  const ul = el('ul'); for (const f of spec.card.form) ul.appendChild(el('li', null, f)); b.appendChild(ul);
+  for (const x of spec.card.examples) b.appendChild(el('div', 'ex', '„' + x + '“'));
+  const t = el('div', 'trap'); t.appendChild(el('b', null, 'Typischer Fehler')); t.appendChild(document.createTextNode(spec.card.trap)); b.appendChild(t);
+  chat.appendChild(b); scrollDown();
+}
+function cardsMarkdown(L){
+  let md = `# Lernkarten Kurs ${L} – Sprechtrainer\n\n`;
+  (SYL[L] || []).forEach((l, i) => {
+    md += `## ${i+1}. ${l.title}\n*${l.goal}*\n\n**Form**\n${l.card.form.map(f => '- ' + f).join('\n')}\n\n**Beispiele**\n${l.card.examples.map(e => '- ' + e).join('\n')}\n\n**Typischer Fehler:** ${l.card.trap}\n\n`;
+  });
+  return md;
+}
+function startLesson(id, opts = {}){
+  const spec = lessonById(id); if (!spec) return;
+  if (mode !== 'course') switchMode('course', true);
+  newConversation();
+  lesson = { spec, phase: opts.review ? 4 : 2, turns:0, hits:0, review: !!opts.review };
+  const c = course[id] || (course[id] = {}); if (!opts.review) c.status = c.status === 'done' ? 'done' : 'progress'; saveCourse();
+  showCard(spec);
+  updateLessonInfo();
+  if (opts.review) { chip('Wiederholungs-Check · ' + spec.title); sendUser('[PHASE 4]', { hidden:true }); }
+  else sendUser('[PHASE 1]', { hidden:true, label:'Lektion · ' + spec.title });
+}
+function phaseLabel(){
+  if (!lesson) return '';
+  const p = PHASES[lesson.phase];
+  return `${lesson.spec.title} · ${p ? p.name + ' ' + Math.min(lesson.turns, p.turns) + '/' + p.turns : 'Abschluss'}`;
+}
+function updateLessonInfo(){
+  const info = $('lessonInfo');
+  if (lesson) info.textContent = phaseLabel();
+  else if (diag) info.textContent = `Diagnose-Gespräch · ${Math.min(diag.turns, 8)}/8`;
+  else { const syl = SYL[S.level] || []; const done = syl.filter(l => (course[l.id] || {}).status === 'done').length; info.textContent = syl.length ? `Kurs ${S.level} · ${done}/${syl.length} Lektionen sitzen` : `Kurs ${S.level} · noch nicht verfügbar`; }
+  $('btnLessonCard').hidden = !lesson; $('btnLessonNext').hidden = !(lesson && PHASES[lesson.phase]);
+  if (lesson && PHASES[lesson.phase]) $('btnLessonNext').textContent = lesson.phase === 4 ? 'Check abbrechen' : 'Weiter ▸ ' + PHASES[lesson.phase + 1].name;
+}
+function courseAfterTurn(userBubble, parsed){
+  if (diag) {
+    if (userBubble) { diag.turns++; updateLessonInfo(); if (diag.turns >= 8 && !diag.ended) afterSpeech = () => { diag.ended = true; sendUser('[DIAGNOSE ENDE]', { hidden:true, label:'Diagnose · Auswertung', kind:'report' }); }; }
+    else if (diag.ended && !parsed.prio) { diag = null; updateLessonInfo(); afterSpeech = () => {}; chip('Keine Empfehlung erkannt – wähle in der Übersicht selbst eine Lektion.'); }
+    if (parsed.prio) {
+      const syl = SYL[S.level] || []; for (const l of syl) if (course[l.id]) course[l.id].prio = false;
+      const names = [];
+      for (const id of parsed.prio) { const l = syl.find(x => x.id === id); if (l) { (course[l.id] = course[l.id] || {}).prio = true; names.push(l.title); } }
+      saveCourse(); diag = null; updateLessonInfo();
+      const c = chip('Empfohlene Reihenfolge: ' + (names.join(' → ') || 'keine Zuordnung möglich'), 'good');
+      const b = el('button', null, 'Zur Übersicht'); b.onclick = openCourse; c.appendChild(b);
+      afterSpeech = () => {};
+    }
+    return;
+  }
+  if (!lesson || !userBubble || !PHASES[lesson.phase]) return;
+  lesson.turns++;
+  if (lesson.phase === 4 && parsed.target === 'OK') lesson.hits++;
+  updateLessonInfo();
+  if (lesson.turns >= PHASES[lesson.phase].turns) afterSpeech = () => advancePhase();
+}
+function advancePhase(){
+  if (!lesson) return;
+  if (state !== 'idle') { stopAll(); setState('idle'); }
+  if (lesson.phase === 2) { lesson.phase = 3; lesson.turns = 0; chip('Phase 3 · Freies Sprechen'); updateLessonInfo(); sendUser('[PHASE 3]', { hidden:true }); }
+  else if (lesson.phase === 3) { lesson.phase = 4; lesson.turns = 0; lesson.hits = 0; chip('Phase 4 · Check: fünf Aufgaben'); updateLessonInfo(); sendUser('[PHASE 4]', { hidden:true }); }
+  else if (lesson.phase === 4) finishLesson();
+}
+function finishLesson(){
+  const L = lesson, passed = L.hits >= 4;
+  const c = course[L.spec.id] || (course[L.spec.id] = {});
+  if (passed) { c.status = 'done'; c.prio = false; } else c.status = 'repeat';
+  c.score = L.hits; c.lastAt = Date.now(); saveCourse();
+  L.phase = 5; updateLessonInfo();
+  const ch = chip(`${passed ? '✓ Lektion sitzt' : '↻ Noch einmal üben'} · ${L.hits} von 5 richtig`, passed ? 'good' : 'err');
+  const b = el('button', null, 'Übersicht'); b.onclick = openCourse; ch.appendChild(b);
+  sendUser(`[ABSCHLUSS] Ergebnis: ${L.hits} von 5 richtig${passed ? ' – bestanden' : ' – noch nicht bestanden'}`, { hidden:true, afterSpeech:() => { lesson = null; updateLessonInfo(); if ($('welcome')) welcome(); } });
+}
+function startDiagnose(){
+  if (mode !== 'course') switchMode('course', true);
+  newConversation();
+  diag = { turns:0 }; updateLessonInfo();
+  sendUser('[START] Begrüße mich kurz und beginne das Diagnose-Gespräch mit der ersten Frage.', { hidden:true, label:'Diagnose-Gespräch · etwa acht Fragen' });
+}
+function openCourse(){
+  stopAll();
+  const L = S.level, syl = SYL[L] || [];
+  $('courseTitle').textContent = `Kurs ${L}`;
+  const done = syl.filter(l => (course[l.id] || {}).status === 'done').length;
+  $('coursePbar').style.width = syl.length ? Math.round(100 * done / syl.length) + '%' : '0%';
+  $('courseActions').hidden = !syl.length;
+  $('courseHint').textContent = syl.length ? `${done} von ${syl.length} Lektionen sitzen. Sitzende Lektionen tauchen als Fokus im freien Gespräch wieder auf; nach einer Woche wird ein kurzer Wiederholungs-Check fällig.` : `Für ${L} gibt es noch keinen Kurs.`;
+  const box = $('lessonList'); box.innerHTML = '';
+  syl.forEach((l, i) => {
+    const c = course[l.id] || {}; const r = el('div', 'lesson');
+    r.appendChild(el('span', 'n', String(i + 1)));
+    const t = el('div', 't'); t.appendChild(document.createTextNode(l.title)); t.appendChild(el('small', null, l.goal)); r.appendChild(t);
+    let badge = null;
+    if (c.status === 'done') badge = el('span', 'badge ' + (isDue(l.id) ? 'due' : 'done'), isDue(l.id) ? 'Wiederholung fällig' : `sitzt · ${c.score}/5`);
+    else if (c.status === 'repeat') badge = el('span', 'badge repeat', `wiederholen · ${c.score}/5`);
+    else if (c.status === 'progress') badge = el('span', 'badge progress', 'angefangen');
+    else if (c.prio) badge = el('span', 'badge prio', 'empfohlen');
+    if (badge) r.appendChild(badge);
+    const b = el('button', 'pill' + (c.status === 'done' && !isDue(l.id) ? '' : ' primary'), c.status === 'done' ? (isDue(l.id) ? 'Kurz-Check' : 'Nochmal') : c.status ? 'Weiter üben' : 'Starten');
+    b.onclick = () => { $('dlgCourse').close(); startLesson(l.id, { review: c.status === 'done' && isDue(l.id) }); };
+    r.appendChild(b); box.appendChild(r);
+  });
+  $('dlgCourse').showModal();
+}
+$('btnCourseOverview').onclick = openCourse;
+$('btnLessonCard').onclick = () => { if (lesson) showCard(lesson.spec); };
+$('btnLessonNext').onclick = () => { if (!lesson) return; if (lesson.phase === 4) { if (confirm('Check abbrechen? Die Lektion bleibt dann offen.')) { lesson = null; updateLessonInfo(); newConversation(); } } else advancePhase(); };
+$('btnDiagnose').onclick = () => { $('dlgCourse').close(); startDiagnose(); };
+$('btnCardsMd').onclick = () => download(`lernkarten-${S.level}.md`, cardsMarkdown(S.level), 'text/markdown');
 
 /* ---------------- Training ---------------- */
 function drillPool(){
@@ -1235,7 +1482,7 @@ function switchMode(m, force){
   if (!force && history.length && !confirm('Modus wechseln und neues Gespräch beginnen?')) return;
   mode = m; S.mode = m; saveSettings();
   document.querySelectorAll('#modeSeg button').forEach(x => x.classList.toggle('active', x.dataset.mode === m));
-  $('toolbarFree').hidden = m !== 'free'; $('toolbarExam').hidden = m !== 'exam'; $('toolbarTraining').hidden = m !== 'training';
+  $('toolbarFree').hidden = m !== 'free'; $('toolbarExam').hidden = m !== 'exam'; $('toolbarTraining').hidden = m !== 'training'; $('toolbarCourse').hidden = m !== 'course';
   if (m === 'training') updateTrainProgress();
   newConversation();
 }
@@ -1246,7 +1493,7 @@ function setLevel(L, silent){
   S.level = L; saveSettings();
   document.querySelectorAll('#levelSeg button').forEach(x => x.classList.toggle('active', x.dataset.level === L));
   renderExamParts();
-  if (changed || !silent) newConversation();
+  if (changed || !silent) newConversation(); else updateLessonInfo();
 }
 document.querySelectorAll('#modeSeg button').forEach(b => b.onclick = () => switchMode(b.dataset.mode));
 document.querySelectorAll('#levelSeg button').forEach(b => b.onclick = () => setLevel(b.dataset.level));
@@ -1296,7 +1543,7 @@ $('btnTestVoice').onclick = () => {
 $('btnBackup').onclick = () => {
   const s = Object.assign({}, S); delete s.apiKey;
   download(`sprechtrainer-backup-${new Date().toISOString().slice(0,10)}.json`,
-    JSON.stringify({ app:'sprechtrainer', version:2, settings:s, errors:errorLog, vocab, sessions, usage }, null, 1), 'application/json');
+    JSON.stringify({ app:'sprechtrainer', version:2, settings:s, errors:errorLog, vocab, sessions, usage, course }, null, 1), 'application/json');
 };
 $('btnRestore').onclick = () => $('restoreFile').click();
 $('restoreFile').onchange = async e => {
@@ -1310,7 +1557,8 @@ $('restoreFile').onchange = async e => {
     const vs = new Set(vocab.map(v => (v.base||v.word).toLowerCase())); for (const v of d.vocab || []) if (!vs.has((v.base||v.word).toLowerCase())) vocab.push(v);
     const ss = new Set(sessions.map(s => s.start)); for (const s of d.sessions || []) if (!ss.has(s.start)) sessions.push(s);
     for (const [ym, u] of Object.entries(d.usage || {})) if (!usage[ym]) usage[ym] = u;
-    saveErrors(); saveVocab(); saveSessions(); saveUsage(); updateBadges();
+    for (const [id, c] of Object.entries(d.course || {})) if (!course[id] || (c.lastAt || 0) > (course[id].lastAt || 0)) course[id] = c;
+    saveErrors(); saveVocab(); saveSessions(); saveUsage(); saveCourse(); updateBadges();
     $('dlgSettings').close(); setLevel(S.level, true); switchMode(S.mode || 'free', true);
     chip('Backup geladen.', 'good');
   } catch (err) { alert('Backup konnte nicht geladen werden: ' + err.message); }
@@ -1392,7 +1640,7 @@ function renderStats(){
   if (!sessions.length) box.appendChild(el('div', 'empty', 'Noch keine Sitzungen. Eine Sitzung wird gespeichert, sobald du gesprochen hast und auf „Neu“ oder „Sitzung beenden“ gehst.'));
   for (const s of [...sessions].reverse().slice(0, 30)) {
     const d = el('details', 'sess');
-    const sm = el('summary'); sm.innerHTML = `<b>${new Date(s.start).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' })}</b> · ${s.level} · ${({free:'Gespräch', exam:'Prüfung', training:'Training'})[s.mode] || s.mode} <span class="meta">· ${fmtMin(s.userSec)} gesprochen · ${s.turns} Beiträge${s.report ? ' · Bericht' : ''}</span>`;
+    const sm = el('summary'); sm.innerHTML = `<b>${new Date(s.start).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' })}</b> · ${s.level} · ${({free:'Gespräch', exam:'Prüfung', training:'Training', course:'Kurs'})[s.mode] || s.mode} <span class="meta">· ${fmtMin(s.userSec)} gesprochen · ${s.turns} Beiträge${s.report ? ' · Bericht' : ''}</span>`;
     d.appendChild(sm);
     d.appendChild(el('p', null, s.report || 'Kein Bericht – beende eine Sitzung mit „Sitzung beenden“, um eine Einschätzung zu bekommen.'));
     box.appendChild(d);
