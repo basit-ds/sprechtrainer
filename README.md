@@ -8,6 +8,7 @@ Läuft komplett im Browser (Edge oder Chrome, Desktop und Android). Die KI dahin
 
 - **Kurs** – Grammatik zum Sprechen: 16 B1-Lektionen in vier Phasen (Erklärung, gelenktes Sprechen, freies Sprechen, Check), Diagnose-Gespräch, Wiederholungs-Checks, Lernkarten als Markdown. Weitere Niveaus folgen in `syllabus.js`.
 - **Schreiben** – telc-Schreibaufgaben für A2 und B1 (Leitpunkte, Wortzahl, Timer), Korrektur als markierter Text, Bewertung nach telc-Kriterien, bessere Formulierungen, Musterlösung; eigene Texte korrigieren lassen; Archiv „Meine Texte“.
+- **Videoanruf mit Lena** – 5, 10 oder 15 Minuten wie ein echter Anruf: animiertes Gesicht mit Lippensynchronität, Blinzeln, Nicken und Mimik; deine Kamera als kleines Bild (bleibt lokal, wird nirgends hingeschickt); freihändig, ohne Text auf dem Bildschirm (Untertitel per CC zuschaltbar). Lena korrigiert nicht während des Gesprächs – die Korrekturen kommen nach dem Auflegen. Sie merkt sich, worüber ihr gesprochen habt, und fragt beim nächsten Anruf nach. Antippen unterbricht sie oder schickt deinen Satz sofort ab; **M** schaltet das Mikrofon stumm.
 - **Niveaus A2 · B1 · B2 · C1** – Sprache, Tempo, Korrekturtiefe und Prüfungsformat passen sich an.
 - **Gespräch** mit Themenwahl und Rollenspielen (Bewerbungsgespräch, Bürgeramt, Arzttermin, Wohnungsbesichtigung …).
 - **Prüfung** – Simulation der mündlichen telc-Prüfung des gewählten Niveaus, mit Timer für Präsentation und Vorbereitung sowie Bewertung nach telc-Kriterien.

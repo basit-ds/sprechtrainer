@@ -57,6 +57,7 @@ header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92
 .iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 11px;font-size:14px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .iconbtn .count{background:var(--bad-soft);color:var(--bad);font-weight:600;font-size:12px;border-radius:99px;padding:0 7px}
 .iconbtn .count.ok{background:var(--accent-soft);color:var(--accent)}
+.iconbtn.call{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
 .toolbar{max-width:900px;margin:0 auto;padding:0 16px 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .toolbar input{flex:1;min-width:180px}
 .toolbar select{width:auto;max-width:260px}
@@ -281,6 +282,7 @@ dialog::backdrop{background:rgba(0,0,0,.35)}
       <button data-mode="free">Gespräch</button><button data-mode="course">Kurs</button><button data-mode="exam">Prüfung</button><button data-mode="training">Training</button><button data-mode="write">Schreiben</button>
     </div>
     <div class="icons">
+      <button class="iconbtn call" id="btnCall" title="Videoanruf mit Lena"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5 21 7.5v9l-5.5-3"/></svg>Videoanruf</button>
       <button class="iconbtn" id="btnStats" title="Statistik">Statistik <span class="count ok" id="streakBadge">0</span></button>
       <button class="iconbtn" id="btnVocab" title="Vokabeln">Vokabeln <span class="count ok" id="vocabCount">0</span></button>
       <button class="iconbtn" id="btnErrors" title="Gesammelte Korrekturen">Fehler <span class="count" id="errCount">0</span></button>
@@ -507,13 +509,14 @@ function splitSentences(t){
   out.push(t.slice(start));
   return out.map(x => x.trim()).filter(Boolean);
 }
+const MOOD_TAG = /\((?:lächelt|lacht|begeistert|überrascht|nachdenklich|mitfühlend|neutral)\)\s*/gi;
 function cleanSpeech(t){
-  return t.replace(/[*_#`~>|]/g, '').replace(/§+[A-Za-zÄÖÜ]*$/,'').replace(/§/g,'').replace(/\s+/g,' ').trim();
+  return t.replace(MOOD_TAG, '').replace(/[*_#`~>|]/g, '').replace(/§+[A-Za-zÄÖÜ]*$/,'').replace(/§/g,'').replace(/\s+/g,' ').trim();
 }
 function splitOutput(full){
   const i = full.indexOf(MARK);
-  if (i < 0) return { spoken: full.replace(/§+$/,''), corr: null };
-  return { spoken: full.slice(0, i), corr: full.slice(i + MARK.length) };
+  if (i < 0) return { spoken: full.replace(/§+$/,'').replace(MOOD_TAG, ''), corr: null };
+  return { spoken: full.slice(0, i).replace(MOOD_TAG, ''), corr: full.slice(i + MARK.length) };
 }
 function stripQuotes(s){ return s.trim().replace(/^[<„“"'»«‚]+|[>“”"'»«‘]+$/g,'').trim(); }
 function parseCorrections(raw){
@@ -714,6 +717,10 @@ let focusLesson = null;      // free mode: a finished lesson the tutor keeps an 
 const PHASES = { 2:{ name:'Gelenktes Sprechen', turns:7 }, 3:{ name:'Freies Sprechen', turns:6 }, 4:{ name:'Check', turns:5 } };
 const SYL = window.SYLLABUS || {};
 let afterSpeech = null;      // callback instead of auto-listen after the tutor finished speaking
+let callActive = false;      // video call running (call.js)
+let callHooks = null;        // call.js: {hold, handsFree(), suffix(), after(), onError()} while a call runs
+let avatarUtt = null;        // call.js: lip-sync hooks for every utterance
+let voiceOverride = null;    // call.js: Lena's voice
 let installPrompt = null;
 
 /* ---------------- Prompt ---------------- */
@@ -771,9 +778,10 @@ Außerhalb dieser Befehle reagierst du einfach prüfungsgerecht auf das, was er 
 - Auf seine Antwort: Sag in ein bis zwei Sätzen, ob er die Zielstruktur getroffen hat; wenn nicht, nenn die richtige Form. Stell danach KEINE neue Frage, das macht die App.
 - Im Korrekturteil nach seiner Antwort zusätzlich eine Zeile: ZIEL: OK (Zielstruktur korrekt verwendet) oder ZIEL: NEIN.`;
 
-  const modeBlock = mode === 'exam' ? exam : mode === 'training' ? training : mode === 'course' ? courseBlock : free;
+  const callBlock = callActive && typeof callPromptBlock === 'function' ? callPromptBlock() : null;
+  const modeBlock = callBlock || (mode === 'exam' ? exam : mode === 'training' ? training : mode === 'course' ? courseBlock : free);
 
-  return `Du bist eine erfahrene, freundliche Deutschlehrerin und Sprechpartnerin (Muttersprachlerin, Hochdeutsch). Ihr führt ein GESPROCHENES Gespräch: Deine Antwort wird per Sprachausgabe vorgelesen, die Beiträge des Lernenden kommen per Spracherkennung.
+  return `${callBlock ? 'Du bist Lena, Muttersprachlerin (Hochdeutsch), und sprichst mit einem Deutschlernenden in einem VIDEOANRUF.' : 'Du bist eine erfahrene, freundliche Deutschlehrerin und Sprechpartnerin (Muttersprachlerin, Hochdeutsch).'} Ihr führt ein GESPROCHENES Gespräch: Deine Antwort wird per Sprachausgabe vorgelesen, die Beiträge des Lernenden kommen per Spracherkennung.
 
 LERNENDER
 - Aktuelles Übungsniveau: ${L}. Langfristiges Ziel: telc Deutsch C1. Er versteht viel, spricht aber noch nicht flüssig genug; deshalb übt er bewusst auch auf niedrigeren Niveaus, um Tempo und Sicherheit aufzubauen.
@@ -855,7 +863,7 @@ function welcome(){
       <li><b>Gespräch starten</b> – ich fange an.</li>
       <li>Mikrofon antippen oder <kbd>Leertaste</kbd> und sprechen. Freihändig sende ich automatisch, wenn du eine Pause machst.</li>
       <li>Tippe auf ein Wort in meinen Antworten, um es nachzuschlagen. <b>Sag's besser</b> zeigt dir deinen letzten Satz, wie ein Muttersprachler ihn sagen würde – sprich ihn nach.</li></ol>
-      <div class="actions"><button class="pill primary" onclick="startFree()">Gespräch starten</button></div>`;
+      <div class="actions"><button class="pill primary" onclick="startFree()">Gespräch starten</button><button class="pill" onclick="openCall()">Lieber per Video: Lena anrufen</button></div>`;
   } else if (mode === 'exam') {
     const ex = EXAM[L];
     w.innerHTML = banner + `<h1>${ex.name} · Mündlich</h1>
@@ -1026,6 +1034,7 @@ function sendUser(text, opts = {}){
     // course: tell the tutor when an answer is the last one of a phase, so it doesn't ask a new question
     if (mode === 'course' && lesson && PHASES[lesson.phase] && lesson.turns + 1 >= PHASES[lesson.phase].turns)
       suffix = lesson.phase === 4 ? '\n[Hinweis der App: Das war die letzte Check-Aufgabe. Reagiere nur mit einem Satz, stell KEINE neue Aufgabe.]' : '\n[Hinweis der App: Das war die letzte Antwort dieser Phase. Reagiere nur kurz darauf, stell KEINE neue Frage.]';
+    if (callHooks) suffix += callHooks.suffix();
     if (mode === 'course' && diag && diag.turns + 1 >= 8) suffix = '\n[Hinweis der App: Das war die letzte Antwort des Diagnose-Gesprächs. Reagiere nur kurz, stell KEINE neue Frage.]';
   }
   else ensureSession();
@@ -1040,7 +1049,7 @@ async function callClaude(userBubble, said, opts = {}){
   const bubble = addTutorBubble(opts.kind);
   const ctrl = new AbortController(); currentAbort = ctrl;
   const gen = ++speechGen;
-  speechQueue = []; streamDone = false; afterSpeech = opts.afterSpeech || null;
+  speechQueue = []; streamDone = false; afterSpeech = opts.afterSpeech || (callHooks && callHooks.after()) || null;
   let consumed = 0;
   const ctx = { full:'', bubble, committed:false, usage:{ in:0, out:0, cw:0, cr:0 } };
   activeStream = ctx;
@@ -1132,6 +1141,7 @@ function showApiError(err, opts){
   const retry = el('button', null, 'Nochmal');
   retry.onclick = () => { c.remove(); callClaude(lastUserBubble(), lastUserText(), opts); };
   c.appendChild(retry);
+  if (callHooks) callHooks.onError(msg, () => { c.remove(); callClaude(lastUserBubble(), lastUserText(), opts); });
   if (s === 401 || s === 404) openSettings(msg);
 }
 function lastUserBubble(){ const all = chat.querySelectorAll('.msg.user'); return all[all.length-1] || null; }
@@ -1595,11 +1605,12 @@ $('prepStart').onclick = () => startTimer(Number($('prepMin').value) * 60, 'Vorb
 
 /* ---------------- Speech output ---------------- */
 let speechQueue = [], speakingNow = false, streamDone = true, speechGen = 0, currentUtt = null, voices = [];
-function pickVoice(){ if (!hasTTS) return null; return voices.find(v => v.name === S.voice) || voices[0] || null; }
+function pickVoice(){ if (!hasTTS) return null; const n = voiceOverride || S.voice; return voices.find(v => v.name === n) || voices[0] || null; }
+function handsFreeOn(){ return callHooks ? callHooks.handsFree() : S.handsFree; }
 function enqueueSpeech(text, gen){
-  if (!S.speak || !hasTTS || gen !== speechGen) return;
+  if ((!S.speak && !callActive) || !hasTTS || gen !== speechGen) return;
   for (const s of splitSentences(cleanSpeech(text))) speechQueue.push(s);
-  if (!speakingNow) speakNext(gen);
+  if (!speakingNow && !(callHooks && callHooks.hold)) speakNext(gen);
 }
 function speakNext(gen){
   if (gen !== speechGen) return;
@@ -1610,7 +1621,8 @@ function speakNext(gen){
   const u = new SpeechSynthesisUtterance(speechQueue.shift());
   const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'de-DE';
   u.rate = (Number(S.rate) || 1) * LEVELS[S.level].rate;
-  u.onend = u.onerror = () => speakNext(gen);
+  if (avatarUtt) { const txt = u.text, r = u.rate; u.onstart = () => avatarUtt && avatarUtt.start(txt, r); u.onboundary = e => { if (avatarUtt && e.name !== 'sentence') avatarUtt.boundary(e.charIndex); }; }
+  u.onend = u.onerror = () => { if (avatarUtt) avatarUtt.end(); speakNext(gen); };
   currentUtt = u;
   speechSynthesis.speak(u);
 }
@@ -1630,9 +1642,9 @@ function onSpeechDone(gen){
     if (S.handsFree) { setTimeout(() => { if (state === 'idle' && mode === 'training') nextDrill(); }, 900); }
     return;
   }
-  if (S.handsFree && SR && document.visibilityState === 'visible' && !document.querySelector('dialog[open]')) startListening();
+  if (handsFreeOn() && SR && document.visibilityState === 'visible' && !document.querySelector('dialog[open]')) startListening();
 }
-function stopSpeaking(){ speechGen++; speechQueue = []; speakingNow = false; if (hasTTS) speechSynthesis.cancel(); }
+function stopSpeaking(){ speechGen++; speechQueue = []; speakingNow = false; if (hasTTS) speechSynthesis.cancel(); if (avatarUtt) avatarUtt.end(); }
 function stopAll(){
   if (currentAbort) { currentAbort.abort(); currentAbort = null; }
   if (activeStream && !activeStream.committed) {
@@ -1709,7 +1721,7 @@ function updateDraft(){
 }
 function armSilence(){
   clearTimeout(silenceTimer);
-  if (!S.handsFree || mode === 'exam') return;
+  if (!handsFreeOn() || mode === 'exam') return;
   silenceTimer = setTimeout(() => { if (listening && (transcript() || interim)) finishListening(); }, (Number(S.pause) || 2.5) * 1000);
 }
 function finishListening(){
@@ -1746,6 +1758,7 @@ document.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
   if (document.querySelector('dialog[open]')) return;
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if (!callActive && $('call') && !$('call').hidden) return;
   if (e.code === 'Space' && !e.repeat) { e.preventDefault(); micAction(); }
   if (e.key === 'Escape') { closePop(); if (state === 'listening') discardListening(); else { stopAll(); setState('idle'); } }
 });
@@ -1834,7 +1847,7 @@ $('btnTestVoice').onclick = () => {
 $('btnBackup').onclick = () => {
   const s = Object.assign({}, S); delete s.apiKey;
   download(`sprechtrainer-backup-${new Date().toISOString().slice(0,10)}.json`,
-    JSON.stringify({ app:'sprechtrainer', version:2, settings:s, errors:errorLog, vocab, sessions, usage, course, writings }, null, 1), 'application/json');
+    JSON.stringify({ app:'sprechtrainer', version:2, settings:s, errors:errorLog, vocab, sessions, usage, course, writings, callNotes }, null, 1), 'application/json');
 };
 $('btnRestore').onclick = () => $('restoreFile').click();
 $('restoreFile').onchange = async e => {
@@ -1850,6 +1863,8 @@ $('restoreFile').onchange = async e => {
     for (const [ym, u] of Object.entries(d.usage || {})) if (!usage[ym]) usage[ym] = u;
     for (const [id, c] of Object.entries(d.course || {})) if (!course[id] || (c.lastAt || 0) > (course[id].lastAt || 0)) course[id] = c;
     const ws = new Set(writings.map(w => w.at)); for (const w of d.writings || []) if (!ws.has(w.at)) writings.push(w);
+    const cs = new Set(callNotes.map(n => n.at)); for (const n of d.callNotes || []) if (!cs.has(n.at)) callNotes.push(n);
+    callNotes.sort((a, b) => a.at - b.at); saveCallNotes();
     saveErrors(); saveVocab(); saveSessions(); saveUsage(); saveCourse(); saveWritings(); updateBadges();
     $('dlgSettings').close(); setLevel(S.level, true); switchMode(S.mode || 'free', true);
     chip('Backup geladen.', 'good');
@@ -1932,13 +1947,14 @@ function renderStats(){
   if (!sessions.length) box.appendChild(el('div', 'empty', 'Noch keine Sitzungen. Eine Sitzung wird gespeichert, sobald du gesprochen hast und auf „Neu“ oder „Sitzung beenden“ gehst.'));
   for (const s of [...sessions].reverse().slice(0, 30)) {
     const d = el('details', 'sess');
-    const sm = el('summary'); sm.innerHTML = `<b>${new Date(s.start).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' })}</b> · ${s.level} · ${({free:'Gespräch', exam:'Prüfung', training:'Training', course:'Kurs', write:'Schreiben'})[s.mode] || s.mode} <span class="meta">· ${fmtMin(s.userSec)} gesprochen · ${s.turns} Beiträge${s.report ? ' · Bericht' : ''}</span>`;
+    const sm = el('summary'); sm.innerHTML = `<b>${new Date(s.start).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' })}</b> · ${s.level} · ${({free:'Gespräch', exam:'Prüfung', training:'Training', course:'Kurs', write:'Schreiben', call:'Videoanruf'})[s.mode] || s.mode} <span class="meta">· ${fmtMin(s.userSec)} gesprochen · ${s.turns} Beiträge${s.report ? ' · Bericht' : ''}</span>`;
     d.appendChild(sm);
     d.appendChild(el('p', null, s.report || 'Kein Bericht – beende eine Sitzung mit „Sitzung beenden“, um eine Einschätzung zu bekommen.'));
     box.appendChild(d);
   }
 }
 $('btnStats').onclick = () => { stopAll(); renderStats(); $('dlgStats').showModal(); };
+$('btnCall').onclick = () => { if (history.length && sess && !confirm('Das aktuelle Gespräch wird beendet. Weiter zum Videoanruf?')) return; openCall(); };
 
 /* ---------------- PWA ---------------- */
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if ($('welcome')) welcome(); });
@@ -1953,5 +1969,6 @@ setLevel(S.level, true);
 switchMode(mode, true);
 if (!S.apiKey) setTimeout(() => openSettings('Willkommen! Trag einmal deinen Claude API-Schlüssel ein, dann kann es losgehen.'), 300);
 </script>
+<script src="call.js"></script>
 </body>
 </html>

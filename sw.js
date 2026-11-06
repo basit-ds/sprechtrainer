@@ -1,7 +1,7 @@
 // Sprechtrainer – Service Worker
 // Caches the app shell so it opens instantly (and offline); API calls always go to the network.
-const CACHE = 'sprechtrainer-v2.2.0';
-const SHELL = ['./', './index.html', './syllabus.js', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
+const CACHE = 'sprechtrainer-v2.3.0';
+const SHELL = ['./', './index.html', './syllabus.js', './call.js', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
